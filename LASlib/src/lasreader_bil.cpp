@@ -44,7 +44,7 @@ BOOL LASreaderBIL::open(const CHAR* file_name)
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
@@ -56,7 +56,7 @@ BOOL LASreaderBIL::open(const CHAR* file_name)
 
   if (!read_hdr_file(file_name))
   {
-    LASMessage(LAS_ERROR, "reading the *.hdr file for '%s'", file_name);
+    laserror("reading the *.hdr file for '%s'", file_name);
     return FALSE;
   }
 
@@ -94,11 +94,10 @@ BOOL LASreaderBIL::open(const CHAR* file_name)
   }
 
   // open the BIL file
-
-  file = fopen(file_name, "rb");
+  file = LASfopen(file_name, "rb");
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -109,8 +108,8 @@ BOOL LASreaderBIL::open(const CHAR* file_name)
 
   // populate the header as much as it makes sense
 
-  sprintf(header.system_identifier, "LAStools (c) by rapidlasso GmbH");
-  sprintf(header.generating_software, "via LASreaderBIL (%d)", LAS_TOOLS_VERSION);
+  snprintf(header.system_identifier, LAS_HEADER_CHAR_LEN, LAS_TOOLS_COPYRIGHT);
+  snprintf(header.generating_software, LAS_HEADER_CHAR_LEN, "via LASreaderBIL (%d)", LAS_TOOLS_VERSION);
 
   // maybe set creation date
 
@@ -363,7 +362,7 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
@@ -376,7 +375,7 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
 
   if ((len == 0) && (file_name_hdr[len] != '.'))
   {
-    LASMessage(LAS_ERROR, "file name '%s' is not a valid BIL file", file_name);
+    laserror("file name '%s' is not a valid BIL file", file_name);
     return FALSE;
   }
 
@@ -384,7 +383,7 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
   file_name_hdr[len+2] = 'd';
   file_name_hdr[len+3] = 'r';
 
-  FILE* file = fopen(file_name_hdr, "r");
+  FILE* file = LASfopen(file_name_hdr, "r");
 
   if (file == 0)
   {
@@ -392,13 +391,13 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
     file_name_hdr[len+2] = 'D';
     file_name_hdr[len+3] = 'R';
 
-    file = fopen(file_name_hdr, "r");
+    file = LASfopen(file_name_hdr, "r");
     free(file_name_hdr);
 
     if (file == 0)
     {
       file_name_hdr[len] = '\0';
-      LASMessage(LAS_ERROR, "cannot open files '%s.hdr' or '%s.HDR'", file_name_hdr, file_name_hdr);
+      laserror("cannot open files '%s.hdr' or '%s.HDR'", file_name_hdr, file_name_hdr);
       return FALSE;
     }
   }
@@ -430,23 +429,23 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
     }
     else if (strstr(line, "ncols") || strstr(line, "NCOLS"))
     {
-      sscanf(line, "%s %d", dummy, &ncols);
+      sscanf_las(line, "%s %d", dummy, &ncols);
     }
     else if (strstr(line, "nrows") || strstr(line, "NROWS"))
     {
-      sscanf(line, "%s %d", dummy, &nrows);
+      sscanf_las(line, "%s %d", dummy, &nrows);
     }
     else if (strstr(line, "nbands") || strstr(line, "NBANDS"))
     {
-      sscanf(line, "%s %d", dummy, &nbands);
+      sscanf_las(line, "%s %d", dummy, &nbands);
     }
     else if (strstr(line, "nbits") || strstr(line, "NBITS"))
     {
-      sscanf(line, "%s %d", dummy, &nbits);
+      sscanf_las(line, "%s %d", dummy, &nbits);
     }
     else if (strstr(line, "layout") || strstr(line, "LAYOUT"))
     {
-      CHAR layout[32];
+      CHAR layout[32] = {0};
       if (sscanf(line, "%s %s", dummy, layout) == 2)
       {
         if (strcmp(layout, "bil") && strcmp(layout, "BIL"))
@@ -461,8 +460,8 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
     }
     else if (strstr(line, "pixeltype") || strstr(line, "PIXELTYPE"))
     {
-      CHAR pixeltype[32];
-      sscanf(line, "%s %s", dummy, pixeltype);
+      CHAR pixeltype[32] = {0};
+      sscanf_las(line, "%s %s", dummy, pixeltype);
       if ((strcmp(pixeltype, "float") == 0) || (strcmp(pixeltype, "FLOAT") == 0))
       {
         floatpixels = TRUE;
@@ -478,12 +477,12 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
     }
     else if (strstr(line, "nodata") || strstr(line, "NODATA"))
     {
-      sscanf(line, "%s %f", dummy, &nodata);
+      sscanf_las(line, "%s %f", dummy, &nodata);
     }
     else if (strstr(line, "byteorder") || strstr(line, "BYTEORDER")) // if little or big endian machine (i == intel, m == motorola)
     {
-      CHAR byteorder[32];
-      sscanf(line, "%s %s", dummy, byteorder);
+      CHAR byteorder[32] = {0};
+      sscanf_las(line, "%s %s", dummy, byteorder);
       if (strcmp(byteorder, "i") && strcmp(byteorder, "I"))
       {
         LASMessage(LAS_WARNING, "byteorder '%s' not recognized by LASreader_bil", byteorder);
@@ -491,19 +490,19 @@ BOOL LASreaderBIL::read_hdr_file(const CHAR* file_name)
     }
     else if (strstr(line, "ulxmap") || strstr(line, "ULXMAP"))
     {
-      sscanf(line, "%s %lf", dummy, &ulxmap);
+      sscanf_las(line, "%s %lf", dummy, &ulxmap);
     }
     else if (strstr(line, "ulymap") || strstr(line, "ULYMAP"))
     {
-      sscanf(line, "%s %lf", dummy, &ulymap);
+      sscanf_las(line, "%s %lf", dummy, &ulymap);
     }
     else if (strstr(line, "xdim") || strstr(line, "XDIM"))
     {
-      sscanf(line, "%s %f", dummy, &xdim);
+      sscanf_las(line, "%s %f", dummy, &xdim);
     }
     else if (strstr(line, "ydim") || strstr(line, "YDIM"))
     {
-      sscanf(line, "%s %f", dummy, &ydim);
+      sscanf_las(line, "%s %f", dummy, &ydim);
     }
   }
 
@@ -537,7 +536,7 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
@@ -550,7 +549,7 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
 
   if ((len == 0) && (file_name_bwl[len] != '.'))
   {
-    LASMessage(LAS_ERROR, "file name '%s' is not a valid BIL file", file_name);
+    laserror("file name '%s' is not a valid BIL file", file_name);
     return FALSE;
   }
 
@@ -558,7 +557,7 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
   file_name_bwl[len+2] = 'l';
   file_name_bwl[len+3] = 'w';
 
-  FILE* file = fopen(file_name_bwl, "r");
+  FILE* file = LASfopen(file_name_bwl, "r");
 
   if (file == 0)
   {
@@ -566,7 +565,7 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
     file_name_bwl[len+2] = 'L';
     file_name_bwl[len+3] = 'W';
 
-    file = fopen(file_name_bwl, "r");
+    file = LASfopen(file_name_bwl, "r");
 
     if (file == 0)
     {
@@ -586,7 +585,7 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
     LASMessage(LAS_WARNING, "corrupt world file");
     return FALSE;
   }
-  sscanf(line, "%f", &xdim);
+  sscanf_las(line, "%f", &xdim);
   if (!fgets(line, 256, file))
   {
     LASMessage(LAS_WARNING, "corrupt world file");
@@ -602,20 +601,20 @@ BOOL LASreaderBIL::read_blw_file(const CHAR* file_name)
     LASMessage(LAS_WARNING, "corrupt world file");
     return FALSE;
   }
-  sscanf(line, "%f", &ydim);
+  sscanf_las(line, "%f", &ydim);
   ydim = -1*ydim;
   if (!fgets(line, 256, file))
   {
     LASMessage(LAS_WARNING, "corrupt world file");
     return FALSE;
   }
-  sscanf(line, "%lf", &ulxcenter);
+  sscanf_las(line, "%lf", &ulxcenter);
   if (!fgets(line, 256, file))
   {
     LASMessage(LAS_WARNING, "corrupt world file");
     return FALSE;
   }
-  sscanf(line, "%lf", &ulycenter);
+  sscanf_las(line, "%lf", &ulycenter);
 
   fclose(file);
 
@@ -663,7 +662,7 @@ BOOL LASreaderBIL::seek(const I64 p_index)
 BOOL LASreaderBIL::read_point_default()
 {
   F32 elevation;
-  while (p_count < npoints)
+  while (p_idx < npoints)
   {
     if (col == ncols)
     {
@@ -677,8 +676,8 @@ BOOL LASreaderBIL::read_point_default()
       {
         if (fread((void*)&elevation, 4, 1, file) != 1)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
       }
@@ -687,8 +686,8 @@ BOOL LASreaderBIL::read_point_default()
         I32 elev;
         if (fread((void*)&elev, 4, 1, file) != 1)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
         elevation = (F32)elev;
@@ -701,8 +700,8 @@ BOOL LASreaderBIL::read_point_default()
         I16 elev;
         if (fread((void*)&elev, 2, 1, file) != 1)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
         elevation = (F32)elev;
@@ -712,8 +711,8 @@ BOOL LASreaderBIL::read_point_default()
         U16 elev;
         if (fread((void*)&elev, 2, 1, file) != 1)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
         elevation = (F32)elev;
@@ -726,8 +725,8 @@ BOOL LASreaderBIL::read_point_default()
         I8 rgb[4];
         if (fread((void*)rgb, 1, nbands, file) != (U32)nbands)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
         elevation = rgb[0];
@@ -737,8 +736,8 @@ BOOL LASreaderBIL::read_point_default()
         U8 rgb[4];
         if (fread((void*)rgb, 1, nbands, file) != (U32)nbands)
         {
-          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_count);
-          npoints = p_count;
+          LASMessage(LAS_WARNING, "end-of-file after %d of %d rows and %d of %d cols. read %lld points", row, nrows, col, ncols, p_idx);
+          npoints = p_idx;
           return FALSE;
         }
         elevation = rgb[0];
@@ -747,21 +746,58 @@ BOOL LASreaderBIL::read_point_default()
 
     if (elevation != nodata)
     {
-      if (!point.set_x(ulxcenter + col * xdim))
+      F64 x = ulxcenter + col * xdim;
+      F64 y = ulycenter - row * ydim;
+      F64 z = elevation;
+
+      if (opener->is_offset_adjust() == FALSE) 
       {
-        overflow_I32_x++;
-      }
-      if (!point.set_y(ulycenter - row * ydim))
+        // compute the quantized x, y, and z values
+        if (!point.set_x(x)) {
+          overflow_I32_x++;
+        }
+        if (!point.set_y(y)) {
+          overflow_I32_y++;
+        }
+        if (!point.set_z(z)) {
+          overflow_I32_z++;
+        }
+      } 
+      else 
       {
-        overflow_I32_y++;
+        I64 X = 0;
+        I64 Y = 0;
+        I64 Z = 0;
+        if (x >= orig_x_offset)
+          X = ((I64)((x / orig_x_scale_factor) + 0.5));
+        else
+          X = ((I64)((x / orig_x_scale_factor) - 0.5));
+        if (y >= orig_y_offset)
+          Y = ((I64)(((y - orig_y_offset) / orig_y_scale_factor) + 0.5));
+        else
+          Y = ((I64)(((y - orig_y_offset) / orig_y_scale_factor) - 0.5));
+        if (z >= orig_z_offset)
+          Z = ((I64)(((z - orig_z_offset) / orig_z_scale_factor) + 0.5));
+        else
+          Z = ((I64)(((z - orig_z_offset) / orig_z_scale_factor) - 0.5));
+
+        if (I32_FITS_IN_RANGE(X))
+          point.set_X(X);
+        else
+          overflow_I32_x++;
+        if (I32_FITS_IN_RANGE(Y))
+          point.set_Y(Y);
+        else
+          overflow_I32_y++;
+        if (I32_FITS_IN_RANGE(Z))
+          point.set_Z(Z);
+        else
+          overflow_I32_z++;
       }
-      if (!point.set_z(elevation))
-      {
-        overflow_I32_z++;
-      }
-      p_count++;
+      p_idx++;
+  p_cnt++;
       col++;
-      return TRUE;
+      return TRUE;    
     }
     else
     {
@@ -804,14 +840,14 @@ BOOL LASreaderBIL::reopen(const CHAR* file_name)
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
-  file = fopen(file_name, "rb");
+  file = LASfopen(file_name, "rb");
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot reopen file '%s'", file_name);
+    laserror("cannot reopen file '%s'", file_name);
     return FALSE;
   }
 
@@ -822,7 +858,8 @@ BOOL LASreaderBIL::reopen(const CHAR* file_name)
 
   col = 0;
   row = 0;
-  p_count = 0;
+  p_idx = 0;
+  p_cnt = 0;
 
   return TRUE;
 }
@@ -852,11 +889,17 @@ void LASreaderBIL::clean()
   overflow_I32_z = 0;
 }
 
-LASreaderBIL::LASreaderBIL()
+LASreaderBIL::LASreaderBIL(LASreadOpener* opener) :LASreader(opener)
 {
   file = 0;
   scale_factor = 0;
   offset = 0;
+  orig_x_offset = 0.0;
+  orig_y_offset = 0.0;
+  orig_z_offset = 0.0;
+  orig_x_scale_factor = 0.01;
+  orig_y_scale_factor = 0.01;
+  orig_z_scale_factor = 0.01;
   clean();
 }
 
@@ -912,6 +955,9 @@ void LASreaderBIL::populate_scale_and_offset()
     }
     header.z_scale_factor = 0.01;
   }
+  orig_x_scale_factor = header.x_scale_factor;
+  orig_y_scale_factor = header.y_scale_factor;
+  orig_z_scale_factor = header.z_scale_factor;
 
   // if not specified in the command line, set a reasonable offset
   if (offset)
@@ -937,6 +983,9 @@ void LASreaderBIL::populate_scale_and_offset()
     else
       header.z_offset = 0;
   }
+  orig_x_offset = header.x_offset;
+  orig_y_offset = header.y_offset;
+  orig_z_offset = header.z_offset;
 }
 
 void LASreaderBIL::populate_bounding_box()
@@ -1008,7 +1057,7 @@ void LASreaderBIL::populate_bounding_box()
   }
 }
 
-LASreaderBILrescale::LASreaderBILrescale(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderBIL()
+LASreaderBILrescale::LASreaderBILrescale(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderBIL(opener)
 {
   scale_factor[0] = x_scale_factor;
   scale_factor[1] = y_scale_factor;
@@ -1022,7 +1071,7 @@ BOOL LASreaderBILrescale::open(const CHAR* file_name)
   return TRUE;
 }
 
-LASreaderBILreoffset::LASreaderBILreoffset(F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBIL()
+LASreaderBILreoffset::LASreaderBILreoffset(LASreadOpener* opener, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBIL(opener)
 {
   this->offset[0] = x_offset;
   this->offset[1] = y_offset;
@@ -1036,7 +1085,10 @@ BOOL LASreaderBILreoffset::open(const CHAR* file_name)
   return TRUE;
 }
 
-LASreaderBILrescalereoffset::LASreaderBILrescalereoffset(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBILrescale(x_scale_factor, y_scale_factor, z_scale_factor), LASreaderBILreoffset(x_offset, y_offset, z_offset)
+LASreaderBILrescalereoffset::LASreaderBILrescalereoffset(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : 
+  LASreaderBIL(opener),
+  LASreaderBILrescale(opener, x_scale_factor, y_scale_factor, z_scale_factor),
+  LASreaderBILreoffset(opener, x_offset, y_offset, z_offset)
 {
 }
 

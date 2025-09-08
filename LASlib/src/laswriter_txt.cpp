@@ -60,15 +60,15 @@ BOOL LASwriterTXT::open(const CHAR* file_name, const LASheader* header, const CH
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
-  file = fopen(file_name, "w");
+  file = LASfopen(file_name, "w");
 
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -81,7 +81,7 @@ BOOL LASwriterTXT::open(FILE* file, const LASheader* header, const CHAR* parse_s
 {
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file pointer is zero");
+    laserror("file pointer is zero");
     return FALSE;
   }
 
@@ -130,7 +130,7 @@ BOOL LASwriterTXT::open(FILE* file, const LASheader* header, const CHAR* parse_s
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown separator '%s'", separator);
+      laserror("unknown separator '%s'", separator);
       return FALSE;
     }
   }
@@ -211,13 +211,11 @@ BOOL LASwriterTXT::open(FILE* file, const LASheader* header, const CHAR* parse_s
     {
       if (ptxVLR)
       {
-        LASMessage(LAS_WARNING, "found VLR for PTX with wrong payload size of %d.\n" \
-                                "\toutputting PTS instead ...", ptxVLR->record_length_after_header);
+        LASMessage(LAS_WARNING, "found VLR for PTX with wrong payload size of %d. outputting PTS instead ...", ptxVLR->record_length_after_header);
       }
       else
       {
-        LASMessage(LAS_WARNING, "found no VLR with PTX info.\n" \
-                                "\toutputting PTS instead ...");
+        LASMessage(LAS_WARNING, "found no VLR with PTX info. outputting PTS instead ...");
       }
       if (header->version_minor >= 4)
       {
@@ -445,8 +443,7 @@ BOOL LASwriterTXT::write_point(const LASpoint* point)
         fprintf(file, "%d", -2048 + point->get_intensity());
       else if (optx)
       {
-        int len;
-        len = sprintf(printstring, "%.3f", 1.0f/4095.0f * point->get_intensity()) - 1;
+        int len = snprintf(printstring, sizeof(printstring), "%.3f", 1.0f/4095.0f * point->get_intensity()) - 1;
         while (printstring[len] == '0') len--;
         if (printstring[len] != '.') len++;
         printstring[len] = '\0';
@@ -456,27 +453,13 @@ BOOL LASwriterTXT::write_point(const LASpoint* point)
         fprintf(file, "%d", point->get_intensity());
       break;
     case 'a': // the scan angle
-      fprintf(file, "%d", point->get_scan_angle_rank());
+      fprintf(file, "%s", point->get_scan_angle_string().c_str());
       break;
     case 'r': // the number of the return
       fprintf(file, "%d", point->get_return_number());
       break;
     case 'c': // the classification
-			if (header->point_data_format > 5)
-			{
-				if (point->get_extended_classification())
-				{
-      fprintf(file, "%d", point->get_extended_classification());
-				}
-				else
-				{
-					fprintf(file, "%d", point->get_classification());
-				}
-			}
-			else
-			{
-				fprintf(file, "%d", point->get_classification());
-			}
+  		fprintf(file, "%d", point->get_classification());
       break;
     case 'u': // the user data
       fprintf(file, "%d", point->get_user_data());
@@ -650,14 +633,14 @@ BOOL LASwriterTXT::check_parse_string(const CHAR* parse_string)
         I32 index = (I32)(p[0] - '0');
         if (index >= header->number_attributes)
         {
-          LASMessage(LAS_ERROR, "extra bytes attribute '%d' does not exist.", index);
+          laserror("extra bytes attribute '%d' does not exist.", index);
           return FALSE;
         }
         attribute_starts[index] = header->get_attribute_start(index);
       }
       else
       {
-        LASMessage(LAS_ERROR, "unknown symbol '%c' in parse string. valid are\n" \
+        laserror("unknown symbol '%c' in parse string. valid are\n" \
                               "\t'x' : the x coordinate\n" \
                               "\t'y' : the y coordinate\n" \
                               "\t'z' : the z coordinate\n" \

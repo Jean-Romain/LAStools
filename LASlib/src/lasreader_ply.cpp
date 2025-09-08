@@ -46,14 +46,14 @@ BOOL LASreaderPLY::open(const CHAR* file_name, U8 point_type, BOOL populate_head
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
   FILE* file = fopen_compressed(file_name, "rb", &piped);
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -71,7 +71,7 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
 
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file pointer is zero");
+    laserror("file pointer is zero");
     return FALSE;
   }
 
@@ -106,8 +106,8 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
   header.number_of_point_records = (npoints > U32_MAX ? 0 : (U32)npoints);
   header.extended_number_of_point_records = npoints;
 
-  sprintf(header.system_identifier, "LAStools (c) by rapidlasso GmbH");
-  sprintf(header.generating_software, "via LASreaderPLY (%d)", LAS_TOOLS_VERSION);
+  snprintf(header.system_identifier, LAS_HEADER_CHAR_LEN, LAS_TOOLS_COPYRIGHT);
+  snprintf(header.generating_software, LAS_HEADER_CHAR_LEN, "via LASreaderPLY (%d)", LAS_TOOLS_VERSION);
 
   // maybe set creation date
 
@@ -250,7 +250,7 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
         header.add_attribute(attribute);
       }
       catch(...) {
-        LASMessage(LAS_ERROR, "initializing attribute %s", attribute_descriptions[i]);
+        laserror("initializing attribute %s", attribute_descriptions[i]);
         return FALSE;
       }
     }
@@ -296,7 +296,7 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
 
       if (!found)
       {
-        LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_string);
+        laserror("could not parse any lines with '%s'", parse_string);
         fclose(file);
         file = 0;
         return FALSE;
@@ -423,7 +423,7 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
     file = fopen_compressed(file_name, "rb", &piped);
     if (file == 0)
     {
-      LASMessage(LAS_ERROR, "could not open '%s' for second pass", file_name);
+      laserror("could not open '%s' for second pass", file_name);
       return FALSE;
     }
 
@@ -473,7 +473,7 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
 
     if (i != 1)
     {
-      LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_string);
+      laserror("could not parse any lines with '%s'", parse_string);
       fclose(this->file);
       this->file = 0;
       free(parse_string);
@@ -506,8 +506,8 @@ BOOL LASreaderPLY::open(FILE* file, const CHAR* file_name, U8 point_type, BOOL p
     populate_scale_and_offset();
   }
 
-  p_count = 0;
-
+  p_idx = 0;
+  p_cnt = 0;
   return TRUE;
 }
 
@@ -529,6 +529,9 @@ void LASreaderPLY::set_scale_factor(const F64* scale_factor)
     this->scale_factor[0] = scale_factor[0];
     this->scale_factor[1] = scale_factor[1];
     this->scale_factor[2] = scale_factor[2];
+    orig_x_scale_factor = scale_factor[0];
+    orig_y_scale_factor = scale_factor[1];
+    orig_z_scale_factor = scale_factor[2];
   }
   else if (this->scale_factor)
   {
@@ -545,6 +548,9 @@ void LASreaderPLY::set_offset(const F64* offset)
     this->offset[0] = offset[0];
     this->offset[1] = offset[1];
     this->offset[2] = offset[2];
+    orig_x_offset = offset[0];
+    orig_y_offset = offset[1];
+    orig_z_offset = offset[2];
   }
   else if (this->offset)
   {
@@ -563,7 +569,7 @@ void LASreaderPLY::add_attribute(I32 attribute_type, const char* name, const cha
   else
   {
     char temp[32];
-    sprintf(temp, "attribute %d", number_attributes);
+    snprintf(temp, sizeof(temp), "attribute %d", number_attributes);
     attribute_names[number_attributes] = LASCopyString(temp);
   }
   if (description)
@@ -585,11 +591,11 @@ void LASreaderPLY::add_attribute(I32 attribute_type, const char* name, const cha
 BOOL LASreaderPLY::seek(const I64 p_index)
 {
   U32 delta = 0;
-  if (p_index > p_count)
+  if (p_index > p_idx)
   {
-    delta = (U32)(p_index - p_count);
+    delta = (U32)(p_index - p_idx);
   }
-  else if (p_index < p_count)
+  else if (p_index < p_idx)
   {
     if (piped) return FALSE;
     fseek(file, 0, SEEK_SET);
@@ -612,7 +618,7 @@ BOOL LASreaderPLY::seek(const I64 p_index)
     // did we manage to parse a line
     if (i != 1)
     {
-      LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_string);
+      laserror("could not parse any lines with '%s'", parse_string);
       fclose(file);
       file = 0;
       free(parse_string);
@@ -626,15 +632,15 @@ BOOL LASreaderPLY::seek(const I64 p_index)
     read_point_default();
     delta--;
   }
-  p_count = p_index;
+  p_idx = p_index;
   return TRUE;
 }
 
 BOOL LASreaderPLY::read_point_default()
 {
-  if (p_count < npoints)
+  if (p_idx < npoints)
   {
-    if (p_count > 0)
+    if (p_idx > 0)
     {
       if (streamin) // binary
       {
@@ -658,11 +664,11 @@ BOOL LASreaderPLY::read_point_default()
           }
           else
           {
-            if (p_count != npoints)
+            if (p_idx != npoints)
             {
-              LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_count, npoints);
+              LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_idx, npoints);
 
-              npoints = p_count;
+              npoints = p_idx;
               if (!populated_header)
               {
                 populate_bounding_box();
@@ -675,10 +681,29 @@ BOOL LASreaderPLY::read_point_default()
     }
     
     // compute the quantized x, y, and z values
-    point.set_X((I32)header.get_X(point.coordinates[0]));
-    point.set_Y((I32)header.get_Y(point.coordinates[1]));
-    point.set_Z((I32)header.get_Z(point.coordinates[2]));
-    p_count++;
+    if (opener->is_offset_adjust() == FALSE) 
+    {
+      point.set_X((I32)header.get_X(point.coordinates[0]));
+      point.set_Y((I32)header.get_Y(point.coordinates[1]));
+      point.set_Z((I32)header.get_Z(point.coordinates[2]));
+    } 
+    else 
+    {
+      if (point.coordinates[0] >= orig_x_offset)
+        point.set_X((I32)(((point.coordinates[0] - orig_x_offset) / orig_x_scale_factor) + 0.5));
+      else
+        point.set_X((I32)(((point.coordinates[0] - orig_x_offset) / orig_x_scale_factor) - 0.5));
+      if (point.coordinates[1] >= orig_y_offset)
+        point.set_Y((I32)(((point.coordinates[1] - orig_y_offset) / orig_y_scale_factor) + 0.5));
+      else
+        point.set_Y((I32)(((point.coordinates[1] - orig_y_offset) / orig_y_scale_factor) - 0.5));
+      if (point.coordinates[2] >= orig_z_offset)
+        point.set_Z((I32)(((point.coordinates[2] - orig_z_offset) / orig_z_scale_factor) + 0.5));
+      else
+        point.set_Z((I32)(((point.coordinates[2] - orig_z_offset) / orig_z_scale_factor) - 0.5));
+    }
+    p_idx++;
+  p_cnt++;
     if (!populated_header)
     {
       // update number of point records
@@ -692,13 +717,21 @@ BOOL LASreaderPLY::read_point_default()
         if (point.return_number >= 1 && point.return_number <= 5) header.number_of_points_by_return[point.return_number-1]++;
       }
       // update bounding box
-      if (point.coordinates[0] < header.min_x) header.min_x = point.coordinates[0];
-      else if (point.coordinates[0] > header.max_x) header.max_x = point.coordinates[0];
-      if (point.coordinates[1] < header.min_y) header.min_y = point.coordinates[1];
-      else if (point.coordinates[1] > header.max_y) header.max_y = point.coordinates[1];
-      if (point.coordinates[2] < header.min_z) header.min_z = point.coordinates[2];
-      else if (point.coordinates[2] > header.max_z) header.max_z = point.coordinates[2];
-
+      if (opener->is_offset_adjust() == FALSE) 
+      {
+        if (point.coordinates[0] < header.min_x)
+          header.min_x = point.coordinates[0];
+        else if (point.coordinates[0] > header.max_x)
+          header.max_x = point.coordinates[0];
+        if (point.coordinates[1] < header.min_y)
+          header.min_y = point.coordinates[1];
+        else if (point.coordinates[1] > header.max_y)
+          header.max_y = point.coordinates[1];
+        if (point.coordinates[2] < header.min_z)
+          header.min_z = point.coordinates[2];
+        else if (point.coordinates[2] > header.max_z)
+          header.max_z = point.coordinates[2];
+      }
       // update the min and max of attributes in extra bytes
       if (number_attributes)
       {
@@ -735,14 +768,14 @@ BOOL LASreaderPLY::reopen(const char* file_name)
 
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
   file = fopen_compressed(file_name, "r", &piped);
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot reopen file '%s'", file_name);
+    laserror("cannot reopen file '%s'", file_name);
     return FALSE;
   }
 
@@ -773,14 +806,14 @@ BOOL LASreaderPLY::reopen(const char* file_name)
 
   if (i != 1)
   {
-    LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_string);
+    laserror("could not parse any lines with '%s'", parse_string);
     fclose(file);
     file = 0;
     return FALSE;
   }
 
-  p_count = 0;
-
+  p_idx = 0;
+  p_cnt = 0;
   return TRUE;
 }
 
@@ -804,7 +837,7 @@ void LASreaderPLY::clean()
   populated_header = FALSE;
 }
 
-LASreaderPLY::LASreaderPLY()
+LASreaderPLY::LASreaderPLY(LASreadOpener* opener) :LASreader(opener)
 {
   file = 0;
   streamin = 0;
@@ -817,6 +850,12 @@ LASreaderPLY::LASreaderPLY()
   translate_intensity = 0.0f;
   scale_intensity = 1.0f;
   number_attributes = 0;
+  orig_x_offset = 0.0;
+  orig_y_offset = 0.0;
+  orig_z_offset = 0.0;
+  orig_x_scale_factor = 0.01;
+  orig_y_scale_factor = 0.01;
+  orig_z_scale_factor = 0.01;
   clean();
 }
 
@@ -1132,16 +1171,7 @@ BOOL LASreaderPLY::read_binary_point()
     }
     else if (p[0] == 'c') // we expect the classification
     {
-      if (point_type > 5)
-      {
-        if ((value < 0) || (value > 255)) LASMessage(LAS_WARNING, "classification %g is out of range of eight bits", value);
-        point.set_extended_classification(U8_QUANTIZE(value));
-      }
-      else
-      {
-        if ((value < 0) || (value > 31)) LASMessage(LAS_WARNING, "classification %g is out of range of five bits", value);
-        point.set_classification(U8_QUANTIZE(value) & 31);
-      }
+      point.set_classification_int(static_cast<I32>(value));
     }
     else if (p[0] == 'u') // we expect the user data
     {
@@ -1171,7 +1201,7 @@ BOOL LASreaderPLY::read_binary_point()
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown symbol '%c' in parse string", p[0]);
+      laserror("unknown symbol '%c' in parse string", p[0]);
     }
     p++;
     t++;
@@ -1394,15 +1424,7 @@ BOOL LASreaderPLY::parse(const char* parse_string)
       while (l[0] && (l[0] == ' ' || l[0] == ',' || l[0] == '\t' || l[0] == ';')) l++; // first skip white spaces
       if (l[0] == 0) return FALSE;
       if (sscanf(l, "%d", &temp_i) != 1) return FALSE;
-      if (temp_i < 0 || temp_i > 255)
-      {
-        LASMessage(LAS_WARNING, "classification %d is out of range of unsigned char", temp_i);
-        point.set_classification(U8_CLAMP(temp_i));
-      }
-      else
-      {
-        point.set_classification((U8)temp_i);
-      }
+      point.set_classification_int(temp_i);
       while (l[0] && l[0] != ' ' && l[0] != ',' && l[0] != '\t' && l[0] != ';') l++; // then advance to next white space
     }
     else if (p[0] == 'u') // we expect the user data
@@ -1484,13 +1506,13 @@ BOOL LASreaderPLY::parse(const char* parse_string)
       while (l[0] && (l[0] == ' ' || l[0] == ',' || l[0] == '\t' || l[0] == ';' || l[0] == '\"')) l++; // first skip white spaces and quotes
       if (l[0] == 0) return FALSE;
       hex_string[0] = l[0]; hex_string[1] = l[1];
-      sscanf(hex_string,"%x",&hex_value);
+      sscanf_las(hex_string,"%x",&hex_value);
       point.rgb[0] = hex_value; 
       hex_string[0] = l[2]; hex_string[1] = l[3];
-      sscanf(hex_string,"%x",&hex_value);
+      sscanf_las(hex_string,"%x",&hex_value);
       point.rgb[1] = hex_value; 
       hex_string[0] = l[4]; hex_string[1] = l[5];
-      sscanf(hex_string,"%x",&hex_value);
+      sscanf_las(hex_string,"%x",&hex_value);
       point.rgb[2] = hex_value;
       l+=6;
       while (l[0] && l[0] != ' ' && l[0] != ',' && l[0] != '\t' && l[0] != ';') l++; // then advance to next white space
@@ -1500,14 +1522,14 @@ BOOL LASreaderPLY::parse(const char* parse_string)
       I32 hex_value;
       while (l[0] && (l[0] == ' ' || l[0] == ',' || l[0] == '\t' || l[0] == ';' || l[0] == '\"')) l++; // first skip white spaces and quotes
       if (l[0] == 0) return FALSE;
-      sscanf(l,"%x",&hex_value);
+      sscanf_las(l,"%x",&hex_value);
       point.intensity = U8_CLAMP(((F64)hex_value/(F64)0xFFFFFF)*255);
       l+=6;
       while (l[0] && l[0] != ' ' && l[0] != ',' && l[0] != '\t' && l[0] != ';') l++; // then advance to next white space
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown symbol '%c' in parse string", p[0]);
+      laserror("unknown symbol '%c' in parse string", p[0]);
     }
     p++;
   }
@@ -1568,7 +1590,7 @@ BOOL LASreaderPLY::parse_header()
       }
       else
       {
-        LASMessage(LAS_WARNING, "format: %s not implemented. contact info@rapidlasso.de", &line[7]);
+        laserrorm("format: %s not implemented", &line[7]);
         return FALSE;
       }
     }
@@ -1586,7 +1608,7 @@ BOOL LASreaderPLY::parse_header()
       {
         if (sscanf(&line[15], "%lld", &npoints) != 1)
         {
-          LASMessage(LAS_WARNING, "element vertex: %scannot parse number of points. contact info@rapidlasso.de", &line[15]);
+          laserrorm("element vertex: %s cannot parse number of points", &line[15]);
           return FALSE;
         }
       }
@@ -1664,8 +1686,8 @@ BOOL LASreaderPLY::parse_header()
           CHAR description[32];
           memset(name, 0, 16);
           memset(description, 0, 32);
-          sscanf(&line[offset], "%15s", name);
-          sscanf(&line[offset], "%31s", description);
+          sscanf_las(&line[offset], "%15s", name);
+          sscanf_las(&line[offset], "%31s", description);
           add_attribute(LAS_ATTRIBUTE_F32, name, description);
           parse_string[items] = '0' + num;
           type_string[items] = 'f';
@@ -1731,8 +1753,8 @@ BOOL LASreaderPLY::parse_header()
           CHAR description[32];
           memset(name, 0, 16);
           memset(description, 0, 32);
-          sscanf(&line[offset], "%15s", name);
-          sscanf(&line[offset], "%31s", description);
+          sscanf_las(&line[offset], "%15s", name);
+          sscanf_las(&line[offset], "%31s", description);
           add_attribute(LAS_ATTRIBUTE_F64, name, description);
           parse_string[items] = '0' + num;
           type_string[items] = 'd';
@@ -1772,8 +1794,8 @@ BOOL LASreaderPLY::parse_header()
           CHAR description[32];
           memset(name, 0, 16);
           memset(description, 0, 32);
-          sscanf(&line[15], "%15s", name);
-          sscanf(&line[15], "%31s", description);
+          sscanf_las(&line[15], "%15s", name);
+          sscanf_las(&line[15], "%31s", description);
           add_attribute(LAS_ATTRIBUTE_U8, name, description);
           parse_string[items] = '0' + num;
           type_string[items] = 'f';
@@ -1787,8 +1809,8 @@ BOOL LASreaderPLY::parse_header()
         CHAR description[32];
         memset(name, 0, 16);
         memset(description, 0, 32);
-        sscanf(&line[13], "%15s", name);
-        sscanf(&line[13], "%31s", description);
+        sscanf_las(&line[13], "%15s", name);
+        sscanf_las(&line[13], "%31s", description);
         add_attribute(LAS_ATTRIBUTE_I32, name, description);
         parse_string[items] = '0' + num;
         type_string[items] = 'i';
@@ -1801,8 +1823,8 @@ BOOL LASreaderPLY::parse_header()
         CHAR description[32];
         memset(name, 0, 16);
         memset(description, 0, 32);
-        sscanf(&line[13], "%15s", name);
-        sscanf(&line[13], "%31s", description);
+        sscanf_las(&line[13], "%15s", name);
+        sscanf_las(&line[13], "%31s", description);
         add_attribute(LAS_ATTRIBUTE_I32, name, description);
         parse_string[items] = '0' + num;
         type_string[items] = 'I';
@@ -1810,13 +1832,13 @@ BOOL LASreaderPLY::parse_header()
       }
       else
       {     
-        LASMessage(LAS_WARNING, "unknown property type: %snot implemented. contact info@rapidlasso.de", &line[9]);
+        laserrorm("unknown property type: %snot implemented", &line[9]);
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_WARNING, "unknown header item: %snot implemented. contact info@rapidlasso.de", line);
+      laserrorm("unknown header item: %snot implemented", line);
     }
 
     LASMessage(LAS_VERBOSE, "parsed: %s", line);
@@ -1849,6 +1871,9 @@ void LASreaderPLY::populate_scale_and_offset()
       header.z_scale_factor = 0.001;
     }
   }
+  orig_x_scale_factor = header.x_scale_factor;
+  orig_y_scale_factor = header.y_scale_factor;
+  orig_z_scale_factor = header.z_scale_factor;
 
   // if not specified in the command line, set a reasonable offset
   if (offset)
@@ -1874,6 +1899,9 @@ void LASreaderPLY::populate_scale_and_offset()
     else
       header.z_offset = 0;
   }
+  orig_x_offset = header.x_offset;
+  orig_y_offset = header.y_offset;
+  orig_z_offset = header.z_offset;
 }
 
 void LASreaderPLY::populate_bounding_box()
@@ -1945,7 +1973,7 @@ void LASreaderPLY::populate_bounding_box()
   }
 }
 
-LASreaderPLYrescale::LASreaderPLYrescale(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderPLY()
+LASreaderPLYrescale::LASreaderPLYrescale(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderPLY(opener)
 {
   scale_factor[0] = x_scale_factor;
   scale_factor[1] = y_scale_factor;
@@ -1971,7 +1999,7 @@ BOOL LASreaderPLYrescale::open(const CHAR* file_name, U8 point_type, BOOL popula
   return TRUE;
 }
 
-LASreaderPLYreoffset::LASreaderPLYreoffset(F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderPLY()
+LASreaderPLYreoffset::LASreaderPLYreoffset(LASreadOpener* opener, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderPLY(opener)
 {
   this->offset[0] = x_offset;
   this->offset[1] = y_offset;
@@ -1997,7 +2025,10 @@ BOOL LASreaderPLYreoffset::open(const CHAR* file_name, U8 point_type, BOOL popul
   return TRUE;
 }
 
-LASreaderPLYrescalereoffset::LASreaderPLYrescalereoffset(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderPLYrescale(x_scale_factor, y_scale_factor, z_scale_factor), LASreaderPLYreoffset(x_offset, y_offset, z_offset)
+LASreaderPLYrescalereoffset::LASreaderPLYrescalereoffset(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : 
+  LASreaderPLY(opener),
+  LASreaderPLYrescale(opener, x_scale_factor, y_scale_factor, z_scale_factor),
+  LASreaderPLYreoffset(opener, x_offset, y_offset, z_offset)
 {
 }
 

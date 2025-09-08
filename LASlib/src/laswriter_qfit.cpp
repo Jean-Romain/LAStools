@@ -52,15 +52,15 @@ BOOL LASwriterQFIT::open(const char* file_name, const LASheader* header, I32 ver
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
-  file = fopen(file_name, "wb");
+  file = LASfopen(file_name, "wb");
 
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -76,7 +76,7 @@ BOOL LASwriterQFIT::open(FILE* file, const LASheader* header, I32 version)
 {
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file pointer is zero");
+    laserror("file pointer is zero");
     return FALSE;
   }
 
@@ -85,7 +85,7 @@ BOOL LASwriterQFIT::open(FILE* file, const LASheader* header, I32 version)
   {
     if(_setmode( _fileno( stdout ), _O_BINARY ) == -1 )
     {
-      LASMessage(LAS_ERROR, "cannot set stdout to binary (untranslated) mode");
+      laserror("cannot set stdout to binary (untranslated) mode");
     }
   }
 #endif
@@ -109,14 +109,14 @@ BOOL LASwriterQFIT::open(ByteStreamOut* stream, const LASheader* header, I32 ver
 {
   if (stream == 0)
   {
-    LASMessage(LAS_ERROR, "ByteStreamOut pointer is zero");
+    laserror("ByteStreamOut pointer is zero");
     return FALSE;
   }
   this->stream = stream;
 
   if (header == 0)
   {
-    LASMessage(LAS_ERROR, "LASheader pointer is zero");
+    laserror("LASheader pointer is zero");
     return FALSE;
   }
 
@@ -124,7 +124,7 @@ BOOL LASwriterQFIT::open(ByteStreamOut* stream, const LASheader* header, I32 ver
 
   if (((-361 < header->min_x) && (-361 < header->min_y) && (header->max_x < 361) && (header->max_y < 361)) == FALSE)
   {
-    LASMessage(LAS_ERROR, "bounding box (%g %g / %g %g) exceeds longitude / latitude", header->min_x, header->min_y, header->max_x, header->max_y);
+    laserror("bounding box (%g %g / %g %g) exceeds longitude / latitude", header->min_x, header->min_y, header->max_x, header->max_y);
     return FALSE;
   }
 
@@ -175,18 +175,18 @@ BOOL LASwriterQFIT::open(ByteStreamOut* stream, const LASheader* header, I32 ver
 
   if (!stream->put32bitsLE((U8*)&version))
   {
-    LASMessage(LAS_ERROR, "while writing version of QFIT header");
+    laserror("while writing version of QFIT header");
     return FALSE;
   }
 
   // populate some ASCII into the remainder of first header record
 
   memset(buffer, 0, 48);
-  sprintf((char*)buffer, "via LASwriterQFIT (version %d)", LAS_TOOLS_VERSION);
+  snprintf((char*)buffer, sizeof(buffer), "via LASwriterQFIT (version %d)", LAS_TOOLS_VERSION);
 
   if (!stream->putBytes((U8*)buffer, version-4))
   {
-    LASMessage(LAS_ERROR, "writing first header record of QFIT header");
+    laserror("writing first header record of QFIT header");
     return FALSE;
   }
 
@@ -197,22 +197,22 @@ BOOL LASwriterQFIT::open(ByteStreamOut* stream, const LASheader* header, I32 ver
 
   if (!stream->put32bitsLE((U8*)&buffer[0]))
   {
-    LASMessage(LAS_ERROR, "while writing -9000000 into QFIT header");
+    laserror("while writing -9000000 into QFIT header");
     return FALSE;
   }
   if (!stream->put32bitsLE((U8*)&buffer[1]))
   {
-    LASMessage(LAS_ERROR, "while writing offset into QFIT header");
+    laserror("while writing offset into QFIT header");
     return FALSE;
   }
 
   // populate some ASCII into the remainder of second header record
 
   memset(buffer, 0, 48);
-  sprintf((char*)buffer, "LAStools by rapidlasso GmbH");
+  snprintf((char*)buffer, sizeof(buffer), "LAStools by rapidlasso GmbH");
   if (!stream->putBytes((U8*)buffer, version-8))
   {
-    LASMessage(LAS_ERROR, "writing second header record of QFIT header");
+    laserror("writing second header record of QFIT header");
     return FALSE;
   }
 
@@ -248,15 +248,15 @@ BOOL LASwriterQFIT::write_point(const LASpoint* point)
 
   if (endian_swap)
   {
-    ENDIAN_SWAP_32((U8*)&buffer[0]);
-    ENDIAN_SWAP_32((U8*)&buffer[1]);
-    ENDIAN_SWAP_32((U8*)&buffer[2]);
-    ENDIAN_SWAP_32((U8*)&buffer[3]);
-    ENDIAN_SWAP_32((U8*)&buffer[5]);
-    ENDIAN_SWAP_32((U8*)&buffer[6]);
-    ENDIAN_SWAP_32((U8*)&buffer[7]);
-    ENDIAN_SWAP_32((U8*)&buffer[8]);
-    ENDIAN_SWAP_32((U8*)&buffer[10]);
+    ENDIAN_SWAP_32_((U8*)&buffer[0]);
+    ENDIAN_SWAP_32_((U8*)&buffer[1]);
+    ENDIAN_SWAP_32_((U8*)&buffer[2]);
+    ENDIAN_SWAP_32_((U8*)&buffer[3]);
+    ENDIAN_SWAP_32_((U8*)&buffer[5]);
+    ENDIAN_SWAP_32_((U8*)&buffer[6]);
+    ENDIAN_SWAP_32_((U8*)&buffer[7]);
+    ENDIAN_SWAP_32_((U8*)&buffer[8]);
+    ENDIAN_SWAP_32_((U8*)&buffer[10]);
   }
 
   if (!stream->putBytes((U8*)buffer, version)) return FALSE;

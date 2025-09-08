@@ -7,10 +7,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\LASzip\src\lasmessage.cpp" />
     <ClCompile Include="geoprojectionconverter.cpp" />
+    <ClCompile Include="proj_loader.cpp" />
+    <ClCompile Include="wktparser.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="geoprojectionconverter.hpp" />
+    <ClInclude Include="..\LASzip\src\lasmessage.hpp" />
+    <ClInclude Include="proj_loader.h" />
+    <ClInclude Include="wktparser.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -39,11 +44,11 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(PROJECT_PATH)\LASzip\src;$(PROJECT_PATH)\LASlib\inc;$(PROJECT_PATH)\LASlib\src;$(PROJECT_PATH)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\LASzip\src;..\LASzip\include\laszip;..\LASlib\inc;..\LASlib\src;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>

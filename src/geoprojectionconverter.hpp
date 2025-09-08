@@ -51,6 +51,7 @@
 
   CHANGE HISTORY:
 
+     1 September 2024 -- integration of the PROJ Library for CRS transformations 
      1 November 2018 -- changes requested by Kirk Waters including GEO_GCS_NAD83_CORS96
      7 September 2018 -- introduced the LASCopyString macro to replace _strdup
     30 October 2017 -- '-vertical_evrf2007' for European Vertical Reference Frame 2007
@@ -69,8 +70,14 @@
 */
 #pragma once
 
-struct GeoProjectionGeoKeys
-{
+#include "proj_loader.h"
+#include <stdio.h>
+#include <string>
+#include <algorithm>
+#include "lasdefinitions.hpp"
+#include "wktparser.h"
+
+struct GeoProjectionGeoKeys {
   unsigned short key_id;
   unsigned short tiff_tag_location;
   unsigned short count;
@@ -141,7 +148,10 @@ struct GeoProjectionGeoKeys
 #define GEO_VERTICAL_NAVD88_GEOID12  1125103
 #define GEO_VERTICAL_NAVD88_GEOID12A 1135103
 #define GEO_VERTICAL_NAVD88_GEOID12B 1145103
+#define GEO_VERTICAL_NAVD88_GEOID18  1185103
 
+#pragma warning(push)
+#pragma warning(disable : 26495)
 class GeoProjectionEllipsoid
 {
 public:
@@ -164,6 +174,9 @@ public:
   short datum;
   char name[256];
   GeoProjectionParameters() { type = -1; geokey = 0; datum = 0; name[0] = '\0'; };
+  std::string info() {
+    return "epsg=" + std::to_string(geokey) + ", " + std::string(name);
+  }
 };
 
 class GeoProjectionParametersUTM : public GeoProjectionParameters
@@ -273,17 +286,52 @@ public:
   double os_gf;
 };
 
+///This class is used for PROJ operations 
+/// IMPORTANT: The Proj lib must be installed and loaded to use these functionalities.
+class ProjParameters
+{
+ public:
+  int arg_count;
+  const int max_param;
+  char** proj_info_args;
+  const char* valid_proj_info_params[7];  // Anzahl der Parameter festlegen
+
+  PJ_CONTEXT* proj_ctx;
+  PJ* proj_source_crs;
+  PJ* proj_target_crs;
+  PJ* proj_transform_crs;
+  
+  ProjParameters();
+  ~ProjParameters();
+
+  void set_header_wkt_representation(PJ* proj_crs);
+  const char* get_target_header_wkt_representation();
+  const char* get_wkt_representation(bool source=true) const;  // cmd arg: 'wkt'
+  const char* get_json_representation(bool source = true) const;  // cmd arg: 'js'
+  const char* get_projString_representation(bool source = true) const;  // cmd arg: 'str'
+  const char* get_epsg_representation(bool source = true) const;        // cmd arg: 'epsg'
+  const char* get_ellipsoid_info(bool source = true);             // cmd arg: 'el'
+  const char* get_datum_info(bool source = true);                 // cmd arg: 'datum'
+  const char* get_coord_system_info(bool source = true);          // cmd arg: 'crs'
+  bool proj_info_arg_contains(const char* arg) const;
+  
+ private:
+  char* header_wkt_representation;
+  char* proj_crs_infos;
+
+  void set_proj_member(char*& member, const char* value);
+};
+
 class GeoProjectionConverter
 {
 public:
-
+  // direct access to current horizontal unit
+  short horizontal_epsg = EPSG_METER;
+  bool GeoTiffInfo(GeoProjectionGeoKeys* geokey, const std::string asciip, F64* doubleparams, std::string& keystr, std::string& value);
   // parse command line arguments
-
-  bool parse(int argc, char* argv[]);
+  void parse(int argc, char* argv[]);
   int unparse(char* string) const;
-
   // set & get current projection
-
   bool set_projection_from_geo_keys(int num_geo_keys, const GeoProjectionGeoKeys* geo_keys, char* geo_ascii_params, double* geo_double_params, char* description=0, bool source=true);
   bool get_geo_keys_from_projection(int& num_geo_keys, GeoProjectionGeoKeys** geo_keys, int& num_geo_double_params, double** geo_double_params, bool source=true);
   bool set_projection_from_ogc_wkt(const char* ogc_wkt, char* description=0);
@@ -320,7 +368,7 @@ public:
   bool set_VerticalUnitsGeoKey(short value);
   short get_VerticalUnitsGeoKey(bool source=true) const;
 
-  bool set_VerticalCSTypeGeoKey(short value, char* description=0);
+  bool set_VerticalCSTypeGeoKey(short value, char* description = 0, size_t descs = 0);
   short get_VerticalCSTypeGeoKey();
 
   bool set_reference_ellipsoid(int id, char* description=0);
@@ -422,16 +470,15 @@ public:
   bool to_lon_lat_ele(const double* point, double& longitude, double& latitude, double& elevation_in_meter) const;
 
   // from current projection to target projection
-
   bool to_target(double* point) const;
   bool to_target(const double* point, double& x, double& y, double& elevation) const;
 
   bool has_target_precision() const;
-  double get_target_precision() const;
+  double get_target_precision(double header_precision = 0.0) const;
   void set_target_precision(double target_precision);
 
   bool has_target_elevation_precision() const;
-  double get_target_elevation_precision() const;
+  double get_target_elevation_precision(double header_precision = 0.0) const;
   void set_target_elevation_precision(double target_elevation_precision);
 
   // for interfacing with common geo-spatial formats
@@ -440,11 +487,25 @@ public:
   bool get_dtm_projection_parameters(short* horizontal_units, short* vertical_units, short* coordinate_system, short* coordinate_zone, short* horizontal_datum, short* vertical_datum, bool source=true);
   bool set_dtm_projection_parameters(short horizontal_units, short vertical_units, short coordinate_system, short coordinate_zone, short horizontal_datum, short vertical_datum, bool source=true);
 
+  // using PROJ lib
+  void set_proj_crs_transform();
+  void set_proj_crs_with_epsg(unsigned int& epsg_code, bool source = true);
+  void set_proj_crs_with_string(const char* proj_string, bool source = true);
+  void set_proj_crs_with_json(const char* json_filename, bool source = true);
+  void set_proj_crs_with_wkt(const char* wkt_filename, bool source = true);
+  void set_proj_crs_with_file_header_wkt(const char* wktContent, bool source = true);
+   
   // helps us to find the 'pcs.csv' file
   char* argv_zero;
 
-private:
+  // parameters for the PROJ operation
+  ProjParameters projParameters;
+  bool is_proj_request;
+  bool disable_messages;
+  bool check_header_for_crs;
+  unsigned int source_header_epsg;
 
+private:
   // parameters for gtiff
   int num_geo_keys;
   GeoProjectionGeoKeys* geo_keys;
@@ -480,6 +541,8 @@ private:
   double target_elevation_precision;
 
   // helper functions
+  FILE* open_geo_file(bool pcs = true, bool vertical = false);
+  char* get_epsg_name_from_pcs_file(short value);
   void set_projection(GeoProjectionParameters* projection, bool source);
   void set_geokey(short geokey, bool source);
   void check_geokey(short geokey, bool source);
@@ -489,4 +552,12 @@ private:
   void compute_aeac_parameters(bool source);
   void compute_hom_parameters(bool source);
   void compute_os_parameters(bool source);
+
+  // using PROJ lib 
+  void set_proj_param_for_transformation_with_epsg(unsigned int& source_code, unsigned int& target_code);
+  void set_proj_param_for_transformation_with_string(const char* proj_sourge_string, const char* proj_target_string);
+  void set_proj_param_for_transformation_with_json(const char* source_filename, const char* target_filename);
+  void set_proj_param_for_transformation_with_wkt(const char* source_filename, const char* target_filename);
+  bool do_proj_crs_transformation(double& x, double& y, double& elevation) const;
 };
+#pragma warning(pop)

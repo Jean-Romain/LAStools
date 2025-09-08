@@ -84,7 +84,7 @@ The documentation is located in
 * `lastile` tiles huge amounts of LAS points into square tiles
 * `lastool` is an old GUI for multiple LAStools (now each tool has its own GUI)
 * `lastrack` classifies LiDAR point based on distance from a trajectory
-* `lasvdatum` transforms iDAR from ellipsoidal to orthometric elevations using a grid
+* `lasvdatum` transforms LiDAR from ellipsoidal to orthometric elevations using a grid
 * `lasvoxel` computes voxelization of points
 * `shp2las` turns an ESRI's Shapefile into binary LAS
 
@@ -124,17 +124,15 @@ Detailed information at https://rapidlasso.de/lastools-linux/
     tar xvzf LAStools.tar.gz
     rm LAStools.tar.gz
     
-2. expand your library path to include your installation directory
-
-    export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
-
-3. install dependencies
-
+2. install dependencies or expand your library path to catch the included libraries
+   - install dependencies
     sudo apt-get install libjpeg62 libpng-dev libtiff-dev libjpeg-dev libz-dev libproj-dev liblzma-dev libjbig-dev libzstd-dev libgeotiff-dev libwebp-dev liblzma-dev libsqlite3-dev
+   - expand library path to include the local "./lib" directory
+    export LD_LIBRARY_PATH=./lib:$LD_LIBRARY_PATH
 
-4. run the LAStools executables
+3. run the LAStools executables, e.g.
 
-    ./laszip64
+    ./las2las64
 
 
 # Examples
@@ -145,15 +143,17 @@ Some sample DOS batch scripts can be found in the `.\example_batch_scripts` dire
 
 # Open source tools
 
-All open source tools can be compiled from source code.
-A ready-to-use MSVS solution file (LAStools.sln) is available for Windows.
-This solution builds all open source tools and dlls in 64 bit.
-There is a cmake file for Linux and MacOS.
+All open source tools can be compiled from source code.  
+A ready-to-use MSVS solution file (LAStools.sln) is available for Windows.  
+This solution builds all open source tools and dlls in 64 bit.  
+There is a cmake file for Linux and MacOS.  
 Just go to the root directory and run
-    cmake -DCMAKE_BUILD_TYPE=Release CMakeLists.txt
-    cmake --build.
-The QGIS toolbox can be installed within QGIS, see (https://rapidlasso.de/lastools-as-qgis-plugin/).
-The binary download contains the plugin for ArcGIS in `.\ArcGIS_toolbox`.
+
+    cmake -DCMAKE_BUILD_TYPE=Release CMakeLists.txt  
+    cmake --build .
+    
+The QGIS toolbox can be installed within QGIS, see (https://rapidlasso.de/lastools-as-qgis-plugin/).  
+The binary download contains the plugin for ArcGIS in `.\ArcGIS_toolbox`.  
 
 
 # Links

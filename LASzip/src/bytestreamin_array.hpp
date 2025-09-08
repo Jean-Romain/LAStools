@@ -46,7 +46,7 @@ public:
 /* read a single byte                                        */
   U32 getByte();
 /* read an array of bytes                                    */
-  void getBytes(U8* bytes, const U32 num_bytes);
+  void getBytes(U8* bytes, const I64 num_bytes);
 /* is the stream seekable (e.g. stdin is not)                */
   BOOL isSeekable() const;
 /* get current position of stream                            */
@@ -81,7 +81,7 @@ public:
 /* read 64 bit big-endian field                              */
   void get64bitsBE(U8* bytes);
 private:
-  U8 swapped[8];
+  U8 swapped[8] = {0};
 };
 
 class ByteStreamInArrayBE : public ByteStreamInArray
@@ -102,7 +102,7 @@ public:
 /* read 64 bit big-endian field                              */
   void get64bitsBE(U8* bytes);
 private:
-  U8 swapped[8];
+  U8 swapped[8] = {0};
 };
 
 inline ByteStreamInArray::ByteStreamInArray()
@@ -145,7 +145,7 @@ inline U32 ByteStreamInArray::getByte()
   return byte;
 }
 
-inline void ByteStreamInArray::getBytes(U8* bytes, const U32 num_bytes)
+inline void ByteStreamInArray::getBytes(U8* bytes, const I64 num_bytes)
 {
   if ((curr + num_bytes) > size)
   {

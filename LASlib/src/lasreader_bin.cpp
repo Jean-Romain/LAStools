@@ -83,16 +83,15 @@ BOOL LASreaderBIN::open(const char* file_name)
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
   // open file
-
-  file = fopen(file_name, "rb");
+  file = LASfopen(file_name, "rb");
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -139,7 +138,7 @@ BOOL LASreaderBIN::open(ByteStreamIn* stream)
 
   if (stream == 0)
   {
-    LASMessage(LAS_ERROR, "ByteStreamIn* pointer is zero");
+    laserror("ByteStreamIn* pointer is zero");
     return FALSE;
   }
 
@@ -150,7 +149,7 @@ BOOL LASreaderBIN::open(ByteStreamIn* stream)
   TSheader tsheader;
   try { stream->getBytes((U8*)&tsheader, sizeof(TSheader)); } catch(...)
   {
-    LASMessage(LAS_ERROR, "reading terrasolid header");
+    laserror("reading terrasolid header");
     return FALSE;
   }
 
@@ -158,19 +157,19 @@ BOOL LASreaderBIN::open(ByteStreamIn* stream)
 
   if (tsheader.size != sizeof(TSheader))
   {
-    LASMessage(LAS_ERROR, "corrupt terrasolid header. size != 56.");
+    laserror("corrupt terrasolid header. size != 56.");
     return FALSE;
   }
 
   if (tsheader.recog_val != 970401)
   {
-    LASMessage(LAS_ERROR, "corrupt terrasolid header. recog_val != 979401.");
+    laserror("corrupt terrasolid header. recog_val != 979401.");
     return FALSE;
   }
 
   if (strncmp(tsheader.recog_str, "CXYZ", 4) != 0)
   {
-    LASMessage(LAS_ERROR, "corrupt terrasolid header. recog_str != CXYZ.");
+    laserror("corrupt terrasolid header. recog_str != CXYZ.");
     return FALSE;
   }
 
@@ -178,8 +177,8 @@ BOOL LASreaderBIN::open(ByteStreamIn* stream)
 
   // populate the header as much as possible
 
-  sprintf(header.system_identifier, "LAStools (c) by rapidlasso GmbH");
-  sprintf(header.generating_software, "via LASreaderBIN (%d)", LAS_TOOLS_VERSION);
+  snprintf(header.system_identifier, LAS_HEADER_CHAR_LEN, LAS_TOOLS_COPYRIGHT);
+  snprintf(header.generating_software, LAS_HEADER_CHAR_LEN, "via LASreaderBIN (%d)", LAS_TOOLS_VERSION);
 
   if (tsheader.time)
   {
@@ -225,7 +224,8 @@ BOOL LASreaderBIN::open(ByteStreamIn* stream)
   
   // set point count to zero
 
-  p_count = 0;
+  p_idx = 0;
+  p_cnt = 0;
 
   // approximate bounding box init
 
@@ -264,7 +264,7 @@ BOOL LASreaderBIN::seek(const I64 p_index)
       pos += (sizeof(U32)*(U32)p_index);
     if (point.have_rgb)
       pos += (sizeof(U32)*(U32)p_index);
-    p_count = p_index;
+    p_idx = p_index;
     return stream->seek(pos);
   }
   return FALSE;
@@ -272,7 +272,7 @@ BOOL LASreaderBIN::seek(const I64 p_index)
 
 BOOL LASreaderBIN::read_point_default()
 {
-  if (p_count < npoints)
+  if (p_idx < npoints)
   {
     int echo;
     if (version == 20020715)
@@ -280,7 +280,7 @@ BOOL LASreaderBIN::read_point_default()
       TSpoint tspoint;
       try { stream->getBytes((U8*)&tspoint, sizeof(TSpoint)); } catch(...)
       {
-        LASMessage(LAS_ERROR, "reading terrasolid point after %u of %u", (U32)p_count, (U32)npoints);
+        laserror("reading terrasolid point after %u of %u", (U32)p_idx, (U32)npoints);
         return FALSE;
       }
       point.set_X(tspoint.x);
@@ -296,7 +296,7 @@ BOOL LASreaderBIN::read_point_default()
       TSrow tsrow;
       try { stream->getBytes((U8*)&tsrow, sizeof(TSrow)); } catch(...)
       {
-        LASMessage(LAS_ERROR, "reading terrasolid row after %u of %u", (U32)p_count, (U32)npoints);
+        laserror("reading terrasolid row after %u of %u", (U32)p_idx, (U32)npoints);
         return FALSE;
       }
       point.set_X(tsrow.x);
@@ -308,12 +308,21 @@ BOOL LASreaderBIN::read_point_default()
       echo = tsrow.echo_intensity >> 14;
     }
 
-    if (header.min_x > point.get_x()) header.min_x = point.get_x();
-    else if (header.max_x < point.get_x()) header.max_x = point.get_x();
-    if (header.min_y > point.get_y()) header.min_y = point.get_y();
-    else if (header.max_y < point.get_y()) header.max_y = point.get_y();
-    if (header.min_z > point.get_z()) header.min_z = point.get_z();
-    else if (header.max_z < point.get_z()) header.max_z = point.get_z();
+    if (opener->is_offset_adjust() == FALSE) 
+    {
+      if (header.min_x > point.get_x())
+        header.min_x = point.get_x();
+      else if (header.max_x < point.get_x())
+        header.max_x = point.get_x();
+      if (header.min_y > point.get_y())
+        header.min_y = point.get_y();
+      else if (header.max_y < point.get_y())
+        header.max_y = point.get_y();
+      if (header.min_z > point.get_z())
+        header.min_z = point.get_z();
+      else if (header.max_z < point.get_z())
+        header.max_z = point.get_z();
+    }
 
     if (echo == 0) // only echo
     {
@@ -345,7 +354,7 @@ BOOL LASreaderBIN::read_point_default()
       U32 time;
       try { stream->getBytes((U8*)&time, sizeof(U32)); } catch(...)
       {
-        LASMessage(LAS_ERROR, "reading terrasolid time");
+        laserror("reading terrasolid time");
         return FALSE;
       }
       point.gps_time = 0.0002*time;
@@ -356,14 +365,15 @@ BOOL LASreaderBIN::read_point_default()
       U8 rgba[4];
       try { stream->getBytes((U8*)rgba, sizeof(U8)*4); } catch(...)
       {
-        LASMessage(LAS_ERROR, "reading terrasolid color");
+        laserror("reading terrasolid color");
         return FALSE;
       }
       point.rgb[0] = 256*rgba[0];
       point.rgb[1] = 256*rgba[1];
       point.rgb[2] = 256*rgba[2];
     }
-    p_count++;
+    p_idx++;
+  p_cnt++;
     return TRUE;
   }
   return FALSE;
@@ -391,10 +401,11 @@ void LASreaderBIN::close(BOOL close_stream)
   }
 }
 
-LASreaderBIN::LASreaderBIN()
+LASreaderBIN::LASreaderBIN(LASreadOpener* opener):LASreader(opener)
 {
   file = 0;
   stream = 0;
+  version = 0;
 }
 
 LASreaderBIN::~LASreaderBIN()
@@ -402,7 +413,7 @@ LASreaderBIN::~LASreaderBIN()
   if (stream) close();
 }
 
-LASreaderBINrescale::LASreaderBINrescale(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderBIN()
+LASreaderBINrescale::LASreaderBINrescale(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderBIN(opener)
 {
   scale_factor[0] = x_scale_factor;
   scale_factor[1] = y_scale_factor;
@@ -428,7 +439,7 @@ BOOL LASreaderBINrescale::open(ByteStreamIn* stream)
   return TRUE;
 }
 
-LASreaderBINreoffset::LASreaderBINreoffset(F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBIN()
+LASreaderBINreoffset::LASreaderBINreoffset(LASreadOpener* opener,  F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBIN(opener)
 {
   this->offset[0] = x_offset;
   this->offset[1] = y_offset;
@@ -454,7 +465,10 @@ BOOL LASreaderBINreoffset::open(ByteStreamIn* stream)
   return TRUE;
 }
 
-LASreaderBINrescalereoffset::LASreaderBINrescalereoffset(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderBINrescale(x_scale_factor, y_scale_factor, z_scale_factor), LASreaderBINreoffset(x_offset, y_offset, z_offset)
+LASreaderBINrescalereoffset::LASreaderBINrescalereoffset(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : 
+  LASreaderBIN(opener),
+  LASreaderBINrescale(opener, x_scale_factor, y_scale_factor, z_scale_factor),
+  LASreaderBINreoffset(opener, x_offset, y_offset, z_offset)
 {
 }
 

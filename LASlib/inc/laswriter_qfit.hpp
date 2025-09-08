@@ -2,9 +2,9 @@
 ===============================================================================
 
   FILE:  laswriter_qfit.hpp
-  
+
   CONTENTS:
-  
+
     Writes LIDAR points from to ASCII through on-the-fly conversion from LAS.
 
   PROGRAMMERS:
@@ -21,11 +21,11 @@
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
+
   CHANGE HISTORY:
-  
-    23 December 2011 -- created after by new OGIO laptop bagpack arrived 
-  
+
+    23 December 2011 -- created after by new OGIO laptop bagpack arrived
+
 ===============================================================================
 */
 #ifndef LAS_WRITER_QFIT_HPP
@@ -37,7 +37,7 @@
 
 class ByteStreamOut;
 
-class LASwriterQFIT : public LASwriter
+class LASLIB_DLL LASwriterQFIT : public LASwriter
 {
 public:
 
@@ -62,7 +62,7 @@ private:
   I32 version;
   BOOL endian_swap;
   BOOL rescale_reoffset;
-  I32 buffer[14];
+  I32 buffer[14] = {0};
   I32 scan_azimuth_array_offset;
   I32 pitch_array_offset;
   I32 roll_array_offset;

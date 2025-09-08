@@ -97,14 +97,14 @@ BOOL LASreaderBuffered::set_file_name(const char* file_name)
   // do we have a file name
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is NULL");
+    laserror("file name pointer is NULL");
     return FALSE;
   }
   // does the file exist
-  FILE* file = fopen(file_name, "r");
+  FILE* file = LASfopen(file_name, "r");
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file '%s' cannot be opened", file_name);
+    laserror("file '%s' cannot be opened", file_name);
     return FALSE;
   }
   fclose(file);
@@ -118,14 +118,14 @@ BOOL LASreaderBuffered::add_neighbor_file_name(const char* file_name)
   // do we have a file name
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is NULL");
+    laserror("file name pointer is NULL");
     return FALSE;
   }
   // does the file exist
-  FILE* file = fopen(file_name, "r");
+  FILE* file = LASfopen(file_name, "r");
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file '%s' cannot be opened", file_name);
+    laserror("file '%s' cannot be opened", file_name);
     return FALSE;
   }
   fclose(file);
@@ -143,7 +143,7 @@ BOOL LASreaderBuffered::open()
 {
   if (!lasreadopener.active())
   {
-    LASMessage(LAS_ERROR, "no input name");
+    laserror("no input name");
     return FALSE;
   }
 
@@ -152,7 +152,7 @@ BOOL LASreaderBuffered::open()
   lasreader = lasreadopener.open();
   if (lasreader == 0)
   {
-    LASMessage(LAS_ERROR, "opening '%s'", lasreadopener.get_file_name());
+    laserror("opening '%s'", lasreadopener.get_file_name());
     return FALSE;
   }
 
@@ -205,7 +205,7 @@ BOOL LASreaderBuffered::open()
     LASreader* lasreader_neighbor = lasreadopener_neighbors.open();
     if (lasreader_neighbor == 0)
     {
-      LASMessage(LAS_ERROR, "opening neighbor '%s'", lasreadopener_neighbors.get_file_name());
+      laserror("opening neighbor '%s'", lasreadopener_neighbors.get_file_name());
       return FALSE;
     }
 
@@ -356,14 +356,16 @@ BOOL LASreaderBuffered::open()
   }
 
   npoints = (header.number_of_point_records ? header.number_of_point_records : header.extended_number_of_point_records);
-  p_count = 0;
+  p_idx = 0;
+  p_cnt = 0;
 
   return TRUE;
 }
 
 BOOL LASreaderBuffered::reopen()
 {
-  p_count = 0;
+  p_idx = 0;
+  p_cnt = 0;
   point_count = 0;
   if (lasreader)
   {
@@ -467,13 +469,15 @@ BOOL LASreaderBuffered::read_point_default()
     if (lasreader->read_point())
     {
       point = lasreader->point;
-      p_count++;
+      p_idx++;
+      p_cnt++;
       return TRUE;
     }
     else if (point_count < buffered_points)
     {
       copy_point_from_buffer();
-      p_count++;
+      p_idx++;
+      p_cnt++;
       return TRUE;
     }
     lasreader->close();
@@ -537,13 +541,16 @@ BOOL LASreaderBuffered::copy_point_to_buffer()
     else if (number_of_buffers == size_of_buffers_array)
     {
       size_of_buffers_array *= 2;
-      buffers = (U8**)realloc(buffers, sizeof(U8*)*size_of_buffers_array);
+      buffers = (U8**)realloc_las(buffers, sizeof(U8*)*size_of_buffers_array);
     }
-    buffers[number_of_buffers] = (U8*)malloc(point.total_point_size * points_per_buffer);
-    current_buffer = buffers[number_of_buffers];
+    if (buffers != nullptr) 
+    {
+      buffers[number_of_buffers] = (U8*)malloc(point.total_point_size * points_per_buffer);
+      current_buffer = buffers[number_of_buffers];
+    }
     number_of_buffers++;
   }
-  point.copy_to(&(current_buffer[point_count_in_buffer*point.total_point_size]));
+  if (current_buffer != nullptr) point.copy_to(&(current_buffer[point_count_in_buffer * point.total_point_size]));
   buffered_points++;
   return TRUE;
 }
@@ -565,7 +572,7 @@ BOOL LASreaderBuffered::copy_point_from_buffer()
   return TRUE;
 }
 
-LASreaderBuffered::LASreaderBuffered() : points_per_buffer(10000)
+LASreaderBuffered::LASreaderBuffered(LASreadOpener* opener): points_per_buffer(10000), LASreader(opener)
 {
   lasreader = 0;
   lasreadopener_neighbors.set_merged(TRUE);

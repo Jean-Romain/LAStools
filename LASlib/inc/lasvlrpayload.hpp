@@ -34,11 +34,13 @@
 
 #include "bytestreamin_array.hpp"
 #include "bytestreamout_array.hpp"
+#include "lasmessage.hpp"
+#include "lasdefinitions.hpp"
 
 class LASvlrPayload
 {
 public:
-  CHAR user_id[16]; 
+  CHAR user_id[LAS_VLR_USER_ID_CHAR_LEN] = {0}; 
   virtual U16 get_record_id() const = 0;
   virtual const CHAR* get_user_id() const = 0;
   virtual I64 get_payload_size() const = 0;
@@ -68,7 +70,7 @@ public:
   F64 sigmaxy;  // horizontal uncertainty [meters] 
   LASvlrRasterLAZ()
   {
-    memcpy(user_id, "Raster LAZ\0\0\0\0\0", 16);
+    memcpy(user_id, "Raster LAZ\0\0\0\0\0\0", LAS_VLR_USER_ID_CHAR_LEN-1);
     nbands = -1;
     nbits = -1;
     ncols = -1;
@@ -136,67 +138,67 @@ public:
   {
     if (!stream->put32bitsLE((const U8*)&nbands))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.nbands");
+      laserror("writing LASvlrRasterLAZ.nbands");
       return FALSE;
     }
     if (!stream->put32bitsLE((const U8*)&nbits))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.nbits");
+      laserror("writing LASvlrRasterLAZ.nbits");
       return FALSE;
     }
     if (!stream->put32bitsLE((const U8*)&ncols))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.ncols");
+      laserror("writing LASvlrRasterLAZ.ncols");
       return FALSE;
     }
     if (!stream->put32bitsLE((const U8*)&nrows))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.nrows");
+      laserror("writing LASvlrRasterLAZ.nrows");
       return FALSE;
     }
     if (!stream->put32bitsLE((const U8*)&reserved1))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.reserved1");
+      laserror("writing LASvlrRasterLAZ.reserved1");
       return FALSE;
     }
     if (!stream->put32bitsLE((const U8*)&reserved2))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.reserved2");
+      laserror("writing LASvlrRasterLAZ.reserved2");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&stepx))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.stepx");
+      laserror("writing LASvlrRasterLAZ.stepx");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&stepx_y))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.stepx_y");
+      laserror("writing LASvlrRasterLAZ.stepx_y");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&stepy))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.stepy");
+      laserror("writing LASvlrRasterLAZ.stepy");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&stepy_x))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.stepy_x");
+      laserror("writing LASvlrRasterLAZ.stepy_x");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&llx))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.llx");
+      laserror("writing LASvlrRasterLAZ.llx");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&lly))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.lly");
+      laserror("writing LASvlrRasterLAZ.lly");
       return FALSE;
     }
     if (!stream->put64bitsLE((const U8*)&sigmaxy))
     {
-      LASMessage(LAS_ERROR, "writing LASvlrRasterLAZ.sigmaxy");
+      laserror("writing LASvlrRasterLAZ.sigmaxy");
       return FALSE;
     }
     return TRUE;
@@ -205,67 +207,67 @@ public:
   {
     try { stream->get32bitsLE((U8*)&nbands); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.nbands");
+      laserror("reading LASvlrRasterLAZ.nbands");
       return FALSE;
     }
     try { stream->get32bitsLE((U8*)&nbits); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.nbits");
+      laserror("reading LASvlrRasterLAZ.nbits");
       return FALSE;
     }
     try { stream->get32bitsLE((U8*)&ncols); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.ncols");
+      laserror("reading LASvlrRasterLAZ.ncols");
       return FALSE;
     }
     try { stream->get32bitsLE((U8*)&nrows); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.nrows");
+      laserror("reading LASvlrRasterLAZ.nrows");
       return FALSE;
     }
     try { stream->get32bitsLE((U8*)&reserved1); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.reserved1");
+      laserror("reading LASvlrRasterLAZ.reserved1");
       return FALSE;
     }
     try { stream->get32bitsLE((U8*)&reserved2); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.reserved2");
+      laserror("reading LASvlrRasterLAZ.reserved2");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&stepx); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.stepx");
+      laserror("reading LASvlrRasterLAZ.stepx");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&stepx_y); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.stepx_y");
+      laserror("reading LASvlrRasterLAZ.stepx_y");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&stepy); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.stepy");
+      laserror("reading LASvlrRasterLAZ.stepy");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&stepy_x); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.stepy_x");
+      laserror("reading LASvlrRasterLAZ.stepy_x");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&llx); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.llx");
+      laserror("reading LASvlrRasterLAZ.llx");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&lly); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.lly");
+      laserror("reading LASvlrRasterLAZ.lly");
       return FALSE;
     }
     try { stream->get64bitsLE((U8*)&sigmaxy); } catch(...)
     {
-      LASMessage(LAS_ERROR, "reading LASvlrRasterLAZ.sigmax");
+      laserror("reading LASvlrRasterLAZ.sigmax");
       return FALSE;
     }
     return TRUE;

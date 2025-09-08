@@ -46,14 +46,14 @@ BOOL LASreaderTXT::open(const CHAR* file_name, U8 point_type, const CHAR* parse_
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
   FILE* file = fopen_compressed(file_name, "r", &piped);
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -72,7 +72,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
 
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file pointer is zero");
+    laserror("file pointer is zero");
     return FALSE;
   }
   // clean the reader
@@ -104,7 +104,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
         header.add_attribute(attribute);
       }
       catch (...) {
-        LASMessage(LAS_ERROR, "initializing attribute %s", attribute_descriptions[i]);
+        laserror("initializing attribute %s", attribute_descriptions[i]);
         return FALSE;
       }
     }
@@ -154,8 +154,8 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
   }
 
   // populate the header as much as it makes sense
-  sprintf(header.system_identifier, "LAStools (c) by rapidlasso GmbH");
-  sprintf(header.generating_software, "via LASreaderTXT (%d)", LAS_TOOLS_VERSION);
+  snprintf(header.system_identifier, LAS_HEADER_CHAR_LEN, LAS_TOOLS_COPYRIGHT);
+  snprintf(header.generating_software, LAS_HEADER_CHAR_LEN, "via LASreaderTXT (%d)", LAS_TOOLS_VERSION);
 
   // maybe set creation date
 #ifdef _WIN32
@@ -325,7 +325,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lld", &npoints) != 1)
         {
-          LASMessage(LAS_ERROR, "parsing number of points for '-itps'");
+          laserror("parsing number of points for '-itps'");
           return FALSE;
         }
         LASMessage(LAS_INFO, "PTS header states %lld points. ignoring ...", npoints);
@@ -333,7 +333,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading PTS header for '-itps'");
+        laserror("reading PTS header for '-itps'");
         return FALSE;
       }
     }
@@ -344,13 +344,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%d", &ncols) != 1)
         {
-          LASMessage(LAS_ERROR, "parsing number of cols");
+          laserror("parsing number of cols");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with number of cols");
+        laserror("reading line with number of cols");
         return FALSE;
       }
       I32 nrows;
@@ -358,13 +358,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%d", &nrows) != 1)
         {
-          LASMessage(LAS_ERROR, "parsing number of rows");
+          laserror("parsing number of rows");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with number of rows");
+        laserror("reading line with number of rows");
         return FALSE;
       }
       npoints = (I64)ncols * (I64)nrows;
@@ -374,13 +374,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf", &(ptx_scan_pos[0]), &(ptx_scan_pos[1]), &(ptx_scan_pos[2])) != 3)
         {
-          LASMessage(LAS_ERROR, "parsing ptx_scan_pos");
+          laserror("parsing ptx_scan_pos");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with ptx_scan_pos");
+        laserror("reading line with ptx_scan_pos");
         return FALSE;
       }
       F64 ptx_scan_axis_x[3];
@@ -388,13 +388,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_x[0]), &(ptx_scan_axis_x[1]), &(ptx_scan_axis_x[2])) != 3)
         {
-          LASMessage(LAS_ERROR, "parsing rotation row 0");
+          laserror("parsing rotation row 0");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with rotation row 0");
+        laserror("reading line with rotation row 0");
         return FALSE;
       }
       F64 ptx_scan_axis_y[3];
@@ -402,13 +402,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_y[0]), &(ptx_scan_axis_y[1]), &(ptx_scan_axis_y[2])) != 3)
         {
-          LASMessage(LAS_ERROR, "parsing rotation row 1");
+          laserror("parsing rotation row 1");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with rotation row 1");
+        laserror("reading line with rotation row 1");
         return FALSE;
       }
       F64 ptx_scan_axis_z[3];
@@ -416,13 +416,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_z[0]), &(ptx_scan_axis_z[1]), &(ptx_scan_axis_z[2])) != 3)
         {
-          LASMessage(LAS_ERROR, "parsing rotation row 2");
+          laserror("parsing rotation row 2");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with rotation row 2");
+        laserror("reading line with rotation row 2");
         return FALSE;
       }
       F64 ptx_matrix_row_0[4];
@@ -430,13 +430,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_0[0]), &(ptx_matrix_row_0[1]), &(ptx_matrix_row_0[2]), &(ptx_matrix_row_0[3])) != 4)
         {
-          LASMessage(LAS_ERROR, "parsing transformation row 0");
+          laserror("parsing transformation row 0");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with transformation row 0");
+        laserror("reading line with transformation row 0");
         return FALSE;
       }
       F64 ptx_matrix_row_1[4];
@@ -444,13 +444,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_1[0]), &(ptx_matrix_row_1[1]), &(ptx_matrix_row_1[2]), &(ptx_matrix_row_1[3])) != 4)
         {
-          LASMessage(LAS_ERROR, "parsing transformation row 1");
+          laserror("parsing transformation row 1");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with transformation row 1");
+        laserror("reading line with transformation row 1");
         return FALSE;
       }
       F64 ptx_matrix_row_2[4];
@@ -458,13 +458,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_2[0]), &(ptx_matrix_row_2[1]), &(ptx_matrix_row_2[2]), &(ptx_matrix_row_2[3])) != 4)
         {
-          LASMessage(LAS_ERROR, "parsing transformation row 2");
+          laserror("parsing transformation row 2");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with transformation row 2");
+        laserror("reading line with transformation row 2");
         return FALSE;
       }
       F64 ptx_matrix_row_3[4];
@@ -472,13 +472,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_3[0]), &(ptx_matrix_row_3[1]), &(ptx_matrix_row_3[2]), &(ptx_matrix_row_3[3])) != 4)
         {
-          LASMessage(LAS_ERROR, "parsing transformation row 3");
+          laserror("parsing transformation row 3");
           return FALSE;
         }
       }
       else
       {
-        LASMessage(LAS_ERROR, "reading line with transformation row 3");
+        laserror("reading line with transformation row 3");
         return FALSE;
       }
       npoints = 0;
@@ -506,7 +506,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
 
     if (npoints == 0)
     {
-      LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_less);
+      laserror("could not parse any lines with '%s'", parse_less);
       fclose(file);
       file = 0;
       free(parse_less);
@@ -641,7 +641,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     file = fopen_compressed(file_name, "r", &piped);
     if (file == 0)
     {
-      LASMessage(LAS_ERROR, "could not open '%s' for second pass", file_name);
+      laserror("could not open '%s' for second pass", file_name);
       return FALSE;
     }
 
@@ -671,7 +671,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
       {
         if (sscanf(line, "%lld", &npoints) != 1)
         {
-          LASMessage(LAS_ERROR, "parsing number of points for '-itps'");
+          laserror("parsing number of points for '-itps'");
           return FALSE;
         }
       }
@@ -702,7 +702,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading PTS header for '-itps'");
+      laserror("reading PTS header for '-itps'");
       return FALSE;
     }
 
@@ -722,13 +722,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%d", &ncols) != 1)
       {
-        LASMessage(LAS_ERROR, "parsing number of cols");
+        laserror("parsing number of cols");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with number of cols");
+      laserror("reading line with number of cols");
       return FALSE;
     }
     I32 nrows;
@@ -736,13 +736,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%d", &nrows) != 1)
       {
-        LASMessage(LAS_ERROR, "parsing number of rows");
+        laserror("parsing number of rows");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with number of rows");
+      laserror("reading line with number of rows");
       return FALSE;
     }
     npoints = (I64)ncols * (I64)nrows;
@@ -775,13 +775,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf", &(ptx_scan_pos[0]), &(ptx_scan_pos[1]), &(ptx_scan_pos[2])) != 3)
       {
-        LASMessage(LAS_ERROR, "parsing ptx_scan_pos");
+        laserror("parsing ptx_scan_pos");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with ptx_scan_pos");
+      laserror("reading line with ptx_scan_pos");
       return FALSE;
     }
     F64 ptx_scan_axis_x[3];
@@ -789,13 +789,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_x[0]), &(ptx_scan_axis_x[1]), &(ptx_scan_axis_x[2])) != 3)
       {
-        LASMessage(LAS_ERROR, "parsing rotation row 0");
+        laserror("parsing rotation row 0");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with rotation row 0");
+      laserror("reading line with rotation row 0");
       return FALSE;
     }
     F64 ptx_scan_axis_y[3];
@@ -803,13 +803,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_y[0]), &(ptx_scan_axis_y[1]), &(ptx_scan_axis_y[2])) != 3)
       {
-        LASMessage(LAS_ERROR, "parsing rotation row 1");
+        laserror("parsing rotation row 1");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with rotation row 1");
+      laserror("reading line with rotation row 1");
       return FALSE;
     }
     F64 ptx_scan_axis_z[3];
@@ -817,13 +817,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf", &(ptx_scan_axis_z[0]), &(ptx_scan_axis_z[1]), &(ptx_scan_axis_z[2])) != 3)
       {
-        LASMessage(LAS_ERROR, "parsing rotation row 2");
+        laserror("parsing rotation row 2");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with rotation row 2");
+      laserror("reading line with rotation row 2");
       return FALSE;
     }
     F64 ptx_matrix_row_0[4];
@@ -831,13 +831,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_0[0]), &(ptx_matrix_row_0[1]), &(ptx_matrix_row_0[2]), &(ptx_matrix_row_0[3])) != 4)
       {
-        LASMessage(LAS_ERROR, "parsing transformation row 0");
+        laserror("parsing transformation row 0");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with transformation row 0");
+      laserror("reading line with transformation row 0");
       return FALSE;
     }
     F64 ptx_matrix_row_1[4];
@@ -845,13 +845,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_1[0]), &(ptx_matrix_row_1[1]), &(ptx_matrix_row_1[2]), &(ptx_matrix_row_1[3])) != 4)
       {
-        LASMessage(LAS_ERROR, "parsing transformation row 1");
+        laserror("parsing transformation row 1");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with transformation row 1");
+      laserror("reading line with transformation row 1");
       return FALSE;
     }
     F64 ptx_matrix_row_2[4];
@@ -859,13 +859,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_2[0]), &(ptx_matrix_row_2[1]), &(ptx_matrix_row_2[2]), &(ptx_matrix_row_2[3])) != 4)
       {
-        LASMessage(LAS_ERROR, "parsing transformation row 2");
+        laserror("parsing transformation row 2");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with transformation row 2");
+      laserror("reading line with transformation row 2");
       return FALSE;
     }
     F64 ptx_matrix_row_3[4];
@@ -873,13 +873,13 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
     {
       if (sscanf(line, "%lf %lf %lf %lf", &(ptx_matrix_row_3[0]), &(ptx_matrix_row_3[1]), &(ptx_matrix_row_3[2]), &(ptx_matrix_row_3[3])) != 4)
       {
-        LASMessage(LAS_ERROR, "parsing transformation row 3");
+        laserror("parsing transformation row 3");
         return FALSE;
       }
     }
     else
     {
-      LASMessage(LAS_ERROR, "reading line with transformation row 3");
+      laserror("reading line with transformation row 3");
       return FALSE;
     }
 
@@ -983,7 +983,7 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
 
   if (i != 1)
   {
-    LASMessage(LAS_ERROR, "could not parse any lines with '%s'", this->parse_string_unparsed);
+    laserror("could not parse any lines with '%s'", this->parse_string_unparsed);
     fclose(this->file);
     this->file = 0;
     free(this->parse_string);
@@ -1014,9 +1014,8 @@ BOOL LASreaderTXT::open(FILE* file, const CHAR* file_name, U8 point_type, const 
 
     populate_scale_and_offset();
   }
-
-  p_count = 0;
-
+  p_idx = 0;
+  p_cnt = 0;
   return TRUE;
 }
 
@@ -1069,6 +1068,9 @@ void LASreaderTXT::set_scale_factor(const F64* scale_factor)
     this->scale_factor[0] = scale_factor[0];
     this->scale_factor[1] = scale_factor[1];
     this->scale_factor[2] = scale_factor[2];
+    orig_x_scale_factor = scale_factor[0];
+    orig_y_scale_factor = scale_factor[1];
+    orig_z_scale_factor = scale_factor[2];
   }
   else if (this->scale_factor)
   {
@@ -1085,6 +1087,9 @@ void LASreaderTXT::set_offset(const F64* offset)
     this->offset[0] = offset[0];
     this->offset[1] = offset[1];
     this->offset[2] = offset[2];
+    orig_x_offset = offset[0];
+    orig_y_offset = offset[1];
+    orig_z_offset = offset[2];
   }
   else if (this->offset)
   {
@@ -1103,7 +1108,7 @@ void LASreaderTXT::add_attribute(I32 data_type, const char* name, const char* de
   else
   {
     char temp[32];
-    sprintf(temp, "attribute %d", number_attributes);
+    snprintf(temp, sizeof(temp), "attribute %d", number_attributes);
     attribute_names[number_attributes] = LASCopyString(temp);
   }
   if (description)
@@ -1125,11 +1130,11 @@ void LASreaderTXT::add_attribute(I32 data_type, const char* name, const char* de
 BOOL LASreaderTXT::seek(const I64 p_index)
 {
   U32 delta = 0;
-  if (p_index > p_count)
+  if (p_index > p_idx)
   {
-    delta = (U32)(p_index - p_count);
+    delta = (U32)(p_index - p_idx);
   }
-  else if (p_index < p_count)
+  else if (p_index < p_idx)
   {
     if (piped) return FALSE;
     fseek(file, 0, SEEK_SET);
@@ -1155,7 +1160,7 @@ BOOL LASreaderTXT::seek(const I64 p_index)
     // did we manage to parse a line
     if (i != 1)
     {
-      LASMessage(LAS_ERROR, "could not parse any lines with '%s'", this->parse_string_unparsed);
+      laserror("could not parse any lines with '%s'", this->parse_string_unparsed);
       fclose(file);
       file = 0;
       free(this->parse_string);
@@ -1169,13 +1174,13 @@ BOOL LASreaderTXT::seek(const I64 p_index)
     read_point_default();
     delta--;
   }
-  p_count = p_index;
+  p_idx = p_index;
   return TRUE;
 }
 
 BOOL LASreaderTXT::read_point_default()
 {
-  if (p_count)
+  if (p_idx)
   {
     while (true)
     {
@@ -1195,21 +1200,21 @@ BOOL LASreaderTXT::read_point_default()
       {
         if (populated_header)
         {
-          if (p_count != npoints)
+          if (p_idx != npoints)
           {
-            LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_count, npoints);
+            LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_idx, npoints);
           }
         }
         else
         {
           if (npoints)
           {
-            if (p_count != npoints)
+            if (p_idx != npoints)
             {
-              LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_count, npoints);
+              LASMessage(LAS_WARNING, "end-of-file after %lld of %lld points", p_idx, npoints);
             }
           }
-          npoints = p_count;
+          npoints = p_idx;
           populate_bounding_box();
         }
         return FALSE;
@@ -1217,10 +1222,29 @@ BOOL LASreaderTXT::read_point_default()
     }
   }
   // compute the quantized x, y, and z values
-  point.set_X((I32)header.get_X(point.coordinates[0]));
-  point.set_Y((I32)header.get_Y(point.coordinates[1]));
-  point.set_Z((I32)header.get_Z(point.coordinates[2]));
-  p_count++;
+  if (opener->is_offset_adjust() == FALSE) 
+  {
+    point.set_X((I32)header.get_X(point.coordinates[0]));
+    point.set_Y((I32)header.get_Y(point.coordinates[1]));
+    point.set_Z((I32)header.get_Z(point.coordinates[2]));
+  } 
+  else
+  {
+   if (point.coordinates[0] >= orig_x_offset)
+     point.set_X((I32)(((point.coordinates[0] - orig_x_offset) / orig_x_scale_factor) + 0.5));
+   else
+     point.set_X((I32)(((point.coordinates[0] - orig_x_offset) / orig_x_scale_factor) - 0.5));
+   if (point.coordinates[1] >= orig_y_offset) 
+     point.set_Y((I32)(((point.coordinates[1] - orig_y_offset) / orig_y_scale_factor) + 0.5)); 
+   else 
+     point.set_Y((I32)(((point.coordinates[1] - orig_y_offset) / orig_y_scale_factor) - 0.5));
+   if (point.coordinates[2] >= orig_z_offset) 
+     point.set_Z((I32)(((point.coordinates[2] - orig_z_offset) / orig_z_scale_factor) + 0.5)); 
+   else 
+     point.set_Z((I32)(((point.coordinates[2] - orig_z_offset) / orig_z_scale_factor) - 0.5));
+  }
+  p_idx++;
+  p_cnt++;
   if (!populated_header)
   {
     // update number of point records
@@ -1238,12 +1262,15 @@ BOOL LASreaderTXT::read_point_default()
       if (point.return_number >= 1 && point.return_number <= 5) header.number_of_points_by_return[point.return_number - 1]++;
     }
     // update bounding box
-    if (point.coordinates[0] < header.min_x) header.min_x = point.coordinates[0];
-    else if (point.coordinates[0] > header.max_x) header.max_x = point.coordinates[0];
-    if (point.coordinates[1] < header.min_y) header.min_y = point.coordinates[1];
-    else if (point.coordinates[1] > header.max_y) header.max_y = point.coordinates[1];
-    if (point.coordinates[2] < header.min_z) header.min_z = point.coordinates[2];
-    else if (point.coordinates[2] > header.max_z) header.max_z = point.coordinates[2];
+    if (opener->is_offset_adjust() == FALSE)
+    {
+      if (point.coordinates[0] < header.min_x) header.min_x = point.coordinates[0];
+      else if (point.coordinates[0] > header.max_x) header.max_x = point.coordinates[0];
+      if (point.coordinates[1] < header.min_y) header.min_y = point.coordinates[1];
+      else if (point.coordinates[1] > header.max_y) header.max_y = point.coordinates[1];
+      if (point.coordinates[2] < header.min_z) header.min_z = point.coordinates[2];
+      else if (point.coordinates[2] > header.max_z) header.max_z = point.coordinates[2];
+    }
     // update the min and max of attributes in extra bytes
     if (number_attributes)
     {
@@ -1278,14 +1305,14 @@ BOOL LASreaderTXT::reopen(const char* file_name)
 
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
   file = fopen_compressed(file_name, "r", &piped);
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot reopen file '%s'", file_name);
+    laserror("cannot reopen file '%s'", file_name);
     return FALSE;
   }
 
@@ -1320,14 +1347,13 @@ BOOL LASreaderTXT::reopen(const char* file_name)
 
   if (i != 1)
   {
-    LASMessage(LAS_ERROR, "could not parse any lines with '%s'", parse_string);
+    laserror("could not parse any lines with '%s'", parse_string);
     fclose(file);
     file = 0;
     return FALSE;
   }
-
-  p_count = 0;
-
+  p_idx = 0;
+  p_cnt = 0;
   return TRUE;
 }
 
@@ -1352,7 +1378,7 @@ void LASreaderTXT::clean()
   populated_header = FALSE;
 }
 
-LASreaderTXT::LASreaderTXT()
+LASreaderTXT::LASreaderTXT(LASreadOpener* opener) :LASreader(opener)
 {
   file = 0;
   piped = false;
@@ -1369,6 +1395,12 @@ LASreaderTXT::LASreaderTXT()
   translate_scan_angle = 0.0f;
   scale_scan_angle = 1.0f;
   number_attributes = 0;
+  orig_x_offset = 0.0;
+  orig_y_offset = 0.0;
+  orig_z_offset = 0.0;
+  orig_x_scale_factor = 0.01;
+  orig_y_scale_factor = 0.01;
+  orig_z_scale_factor = 0.01;
   clean();
 }
 
@@ -1621,6 +1653,8 @@ BOOL LASreaderTXT::parse_column_description(CHAR** parse_string)
     char* auto_parse_string = (char*)calloc(64, sizeof(char));
 
     U32 i = 0;
+#pragma warning(push)
+#pragma warning(disable : 6011)
     while (token)
     {
       if (strcmp(token, "x") == 0) auto_parse_string[i] = 'x';
@@ -1662,7 +1696,7 @@ BOOL LASreaderTXT::parse_column_description(CHAR** parse_string)
         }
         if (error)
         {
-          LASMessage(LAS_ERROR, "column 'HSV_H' is not followed by 'HSV_S' and 'HSV_V'");
+          laserror("column 'HSV_H' is not followed by 'HSV_S' and 'HSV_V'");
           return true;
         }
       }
@@ -1680,7 +1714,7 @@ BOOL LASreaderTXT::parse_column_description(CHAR** parse_string)
         }
         if (error)
         {
-          LASMessage(LAS_ERROR, "column 'HSL_h' is not followed by 'HSL_s' and 'HSL_l'");
+          laserror("column 'HSL_h' is not followed by 'HSL_s' and 'HSL_l'");
           return true;
         }
       }
@@ -1698,7 +1732,7 @@ BOOL LASreaderTXT::parse_column_description(CHAR** parse_string)
         }
         if (error)
         {
-          LASMessage(LAS_ERROR, "column 'HSV_h' is not followed by 'HSV_s' and 'HSV_v'");
+          laserror("column 'HSV_h' is not followed by 'HSV_s' and 'HSV_v'");
           return true;
         }
       }
@@ -1716,35 +1750,36 @@ BOOL LASreaderTXT::parse_column_description(CHAR** parse_string)
         }
         if (error)
         {
-          LASMessage(LAS_ERROR, "column 'HSL_H' is not followed by 'HSL_S' and 'HSL_L'");
+          laserror("column 'HSL_H' is not followed by 'HSL_S' and 'HSL_L'");
           return true;
         }
       }
+#pragma warning(pop)
       else if (strcmp(token, "HSV_S") == 0 || strcmp(token, "HSV_V") == 0)
       {
         // Assuming that HSV columns are consecutive HSV_S should have already been parsed
-        LASMessage(LAS_ERROR, "column 'HSV_S' or 'HSV_V' is not led by 'HSV_H'");
+        laserror("column 'HSV_S' or 'HSV_V' is not led by 'HSV_H'");
         return true;
       }
       else if (strcmp(token, "HSV_s") == 0 || strcmp(token, "HSV_v") == 0)
       {
-        LASMessage(LAS_ERROR, "column 'HSV_s' or 'HSV_v' is not led by 'HSV_h'");
+        laserror("column 'HSV_s' or 'HSV_v' is not led by 'HSV_h'");
         return true;
       }
       else if (strcmp(token, "HSL_S") == 0 || strcmp(token, "HSL_L") == 0)
       {
-        LASMessage(LAS_ERROR, "column 'HSL_S' or 'HSL_L' is not led by 'HSL_H'");
+        laserror("column 'HSL_S' or 'HSL_L' is not led by 'HSL_H'");
         return true;
       }
       else if (strcmp(token, "HSL_s") == 0 || strcmp(token, "HSL_l") == 0)
       {
-        LASMessage(LAS_ERROR, "column 'HSL_s' or 'HSL_l' is not led by 'HSL_h'");
+        laserror("column 'HSL_s' or 'HSL_l' is not led by 'HSL_h'");
         return true;
       }
       else
       {
         LASMessage(LAS_WARNING, "unknown parse item '%s'. skipping ...", token);
-        auto_parse_string[i] = 's';
+        if (auto_parse_string != nullptr) auto_parse_string[i] = 's';
       }
       token = strtok(NULL, delimiters);
       i++;
@@ -1841,7 +1876,7 @@ BOOL LASreaderTXT::parse(const char* parse_string)
       if (sscanf(lptr, "%lf", &(point.coordinates[1])) != 1) return FALSE;
       skip_post();
     }
-    else if (p[0] == 'z') // we expect the x coordinate
+    else if (p[0] == 'z') // we expect the z coordinate
     {
       if (!skip_pre()) return FALSE;
       if (sscanf(lptr, "%lf", &(point.coordinates[2])) != 1) return FALSE;
@@ -2008,36 +2043,7 @@ BOOL LASreaderTXT::parse(const char* parse_string)
     {
       if (!skip_pre()) return FALSE;
       if (sscanf(lptr, "%d", &temp_i) != 1) return FALSE;
-      if (temp_i < 0)
-      {
-        LASMessage(LAS_WARNING, "classification %d is negative. zeroing ...", temp_i);
-        point.set_classification(0);
-        point.set_extended_classification(0);
-      }
-      else if (point.extended_point_type)
-      {
-        if (temp_i > 255)
-        {
-          LASMessage(LAS_WARNING, "extended classification %d is larger than 255. clamping ...", temp_i);
-          point.set_extended_classification(255);
-        }
-        else
-        {
-          point.set_extended_classification((U8)temp_i);
-        }
-      }
-      else
-      {
-        if (temp_i > 31)
-        {
-          LASMessage(LAS_WARNING, "classification %d is larger than 31. clamping ...", temp_i);
-          point.set_classification(31);
-        }
-        else
-        {
-          point.set_classification((U8)temp_i);
-        }
-      }
+      point.set_classification_int(temp_i);
       skip_post();
     }
     else if (p[0] == 'u') // we expect the user data
@@ -2095,13 +2101,13 @@ BOOL LASreaderTXT::parse(const char* parse_string)
       while (lptr[0] && (lptr[0] == ' ' || lptr[0] == ',' || lptr[0] == '\t' || lptr[0] == ';' || lptr[0] == '\"')) lptr++; // first skip white spaces and quotes
       if (lptr[0] == 0) return FALSE;
       hex_string[0] = lptr[0]; hex_string[1] = lptr[1];
-      sscanf(hex_string, "%x", &hex_value);
+      sscanf_las(hex_string, "%x", &hex_value);
       point.rgb[0] = hex_value;
       hex_string[0] = lptr[2]; hex_string[1] = lptr[3];
-      sscanf(hex_string, "%x", &hex_value);
+      sscanf_las(hex_string, "%x", &hex_value);
       point.rgb[1] = hex_value;
       hex_string[0] = lptr[4]; hex_string[1] = lptr[5];
-      sscanf(hex_string, "%x", &hex_value);
+      sscanf_las(hex_string, "%x", &hex_value);
       point.rgb[2] = hex_value;
       lptr += 6;
       skip_post();
@@ -2111,7 +2117,7 @@ BOOL LASreaderTXT::parse(const char* parse_string)
       I32 hex_value;
       while (lptr[0] && (lptr[0] == ' ' || lptr[0] == ',' || lptr[0] == '\t' || lptr[0] == ';' || lptr[0] == '\"')) lptr++; // first skip white spaces and quotes
       if (lptr[0] == 0) return FALSE;
-      sscanf(lptr, "%x", &hex_value);
+      sscanf_las(lptr, "%x", &hex_value);
       point.intensity = U8_CLAMP(((F64)hex_value / (F64)0xFFFFFF) * 255);
       lptr += 6;
       skip_post();
@@ -2214,7 +2220,7 @@ BOOL LASreaderTXT::parse(const char* parse_string)
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown symbol '%c' in parse string", p[0]);
+      laserror("unknown symbol '%c' in parse string", p[0]);
     }
     p++;
   }
@@ -2276,7 +2282,7 @@ BOOL LASreaderTXT::check_parse_string(const char* parse_string)
         I32 index = (I32)(p[0] - '0');
         if (index >= header.number_attributes)
         {
-          LASMessage(LAS_ERROR, "extra bytes attribute '%d' was not described.", index);
+          laserror("extra bytes attribute '%d' was not described.", index);
           return FALSE;
         }
         attribute_starts[index] = header.get_attribute_start(index);
@@ -2294,26 +2300,26 @@ BOOL LASreaderTXT::check_parse_string(const char* parse_string)
           }
           if (index >= header.number_attributes)
           {
-            LASMessage(LAS_ERROR, "extra bytes attribute '%d' was not described.", index);
+            laserror("extra bytes attribute '%d' was not described.", index);
             return FALSE;
           }
           if (p[0] != ')')
           {
-            LASMessage(LAS_ERROR, "extra bytes attribute '%d' misses closing bracket.", index);
+            laserror("extra bytes attribute '%d' misses closing bracket.", index);
             return FALSE;
           }
           attribute_starts[index] = header.get_attribute_start(index);
         }
         else
         {
-          LASMessage(LAS_ERROR, "parse string opening bracket '(' misses extra bytes index.");
+          laserror("parse string opening bracket '(' misses extra bytes index.");
           return FALSE;
         }
       }
       else
       {
         //pre-formated multiline message
-        LASMessage(LAS_ERROR, "unknown symbol '%c' in parse string. valid are\n" \
+        laserror("unknown symbol '%c' in parse string. valid are\n" \
                               "       'x' : the <x> coordinate\n" \
                               "       'y' : the <y> coordinate\n" \
                               "       'z' : the <z> coordinate\n" \
@@ -2377,6 +2383,9 @@ void LASreaderTXT::populate_scale_and_offset()
     }
     header.z_scale_factor = 0.01;
   }
+  orig_x_scale_factor = header.x_scale_factor;
+  orig_y_scale_factor = header.y_scale_factor;
+  orig_z_scale_factor = header.z_scale_factor;
 
   // if not specified in the command line, set a reasonable offset
   if (offset)
@@ -2387,27 +2396,29 @@ void LASreaderTXT::populate_scale_and_offset()
   }
   else
   {
-    if (F64_IS_FINITE(header.min_x) && F64_IS_FINITE(header.max_x))
+    if (F64_IS_FINITE(header.min_x) && F64_IS_FINITE(header.max_x)) 
       header.x_offset = ((I64)((header.min_x + header.max_x) / header.x_scale_factor / 20000000)) * 10000000 * header.x_scale_factor;
-    else
+    else 
       header.x_offset = 0;
 
     if (F64_IS_FINITE(header.min_y) && F64_IS_FINITE(header.max_y))
       header.y_offset = ((I64)((header.min_y + header.max_y) / header.y_scale_factor / 20000000)) * 10000000 * header.y_scale_factor;
-    else
+    else 
       header.y_offset = 0;
-
-    if (F64_IS_FINITE(header.min_z) && F64_IS_FINITE(header.max_z))
+  
+    if (F64_IS_FINITE(header.min_z) && F64_IS_FINITE(header.max_z)) 
       header.z_offset = ((I64)((header.min_z + header.max_z) / header.z_scale_factor / 20000000)) * 10000000 * header.z_scale_factor;
     else
       header.z_offset = 0;
   }
+  orig_x_offset = header.x_offset;
+  orig_y_offset = header.y_offset;
+  orig_z_offset = header.z_offset;
 }
 
 void LASreaderTXT::populate_bounding_box()
 {
   // compute quantized and then unquantized bounding box
-
   F64 dequant_min_x = header.get_x((I32)(header.get_X(header.min_x)));
   F64 dequant_max_x = header.get_x((I32)(header.get_X(header.max_x)));
   F64 dequant_min_y = header.get_y((I32)(header.get_Y(header.min_y)));
@@ -2473,7 +2484,7 @@ void LASreaderTXT::populate_bounding_box()
   }
 }
 
-LASreaderTXTrescale::LASreaderTXTrescale(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderTXT()
+LASreaderTXTrescale::LASreaderTXTrescale(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor) : LASreaderTXT(opener)
 {
   scale_factor[0] = x_scale_factor;
   scale_factor[1] = y_scale_factor;
@@ -2499,7 +2510,7 @@ BOOL LASreaderTXTrescale::open(const CHAR* file_name, U8 point_type, const CHAR*
   return TRUE;
 }
 
-LASreaderTXTreoffset::LASreaderTXTreoffset(F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderTXT()
+LASreaderTXTreoffset::LASreaderTXTreoffset(LASreadOpener* opener, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderTXT(opener)
 {
   this->offset[0] = x_offset;
   this->offset[1] = y_offset;
@@ -2525,7 +2536,10 @@ BOOL LASreaderTXTreoffset::open(const CHAR* file_name, U8 point_type, const CHAR
   return TRUE;
 }
 
-LASreaderTXTrescalereoffset::LASreaderTXTrescalereoffset(F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : LASreaderTXTrescale(x_scale_factor, y_scale_factor, z_scale_factor), LASreaderTXTreoffset(x_offset, y_offset, z_offset)
+LASreaderTXTrescalereoffset::LASreaderTXTrescalereoffset(LASreadOpener* opener, F64 x_scale_factor, F64 y_scale_factor, F64 z_scale_factor, F64 x_offset, F64 y_offset, F64 z_offset) : 
+  LASreaderTXT(opener),
+  LASreaderTXTrescale(opener, x_scale_factor, y_scale_factor, z_scale_factor), 
+  LASreaderTXTreoffset(opener, x_offset, y_offset, z_offset)
 {
 }
 

@@ -50,18 +50,20 @@
 #ifndef LAS_DEFINITIONS_HPP
 #define LAS_DEFINITIONS_HPP
 
-#define LAS_TOOLS_VERSION 240226
+#define LAS_TOOLS_VERSION 250825
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <cassert>
 
 #include "mydefs.hpp"
 #include "lasvlr.hpp"
 #include "laszip.hpp"
 #include "laspoint.hpp"
 #include "lasmessage.hpp"
+
+#define LAS_TOOLS_COPYRIGHT "LAStools (c) by rapidlasso GmbH"
 
 #define LAS_TOOLS_FORMAT_DEFAULT 0
 #define LAS_TOOLS_FORMAT_LAS     1
@@ -76,6 +78,7 @@
 #define LAS_TOOLS_FORMAT_BIL    10
 #define LAS_TOOLS_FORMAT_FLT    11
 #define LAS_TOOLS_FORMAT_DTM    12
+#define LAS_TOOLS_FORMAT_JSON   13
 
 #define LAS_TOOLS_GLOBAL_ENCODING_BIT_GPS_TIME_TYPE 0
 #define LAS_TOOLS_GLOBAL_ENCODING_BIT_WDP_INTERNAL  1
@@ -86,18 +89,17 @@
 #define LAS_TOOLS_IO_IBUFFER_SIZE   262144
 #define LAS_TOOLS_IO_OBUFFER_SIZE   262144
 
-#ifndef MAX_PATH // linux
-#define MAX_PATH 256
-#endif
+#define LAS_HEADER_CHAR_LEN 33
+#define LAS_VLR_USER_ID_CHAR_LEN 17
 
 class LASLIB_DLL LASvlr
 {
 public:
   U16 reserved;
-  CHAR user_id[16]; 
+  CHAR user_id[LAS_VLR_USER_ID_CHAR_LEN]; 
   U16 record_id;
   U16 record_length_after_header;
-  CHAR description[32];
+  CHAR description[LAS_HEADER_CHAR_LEN];
   U8* data;
   LASvlr() { memset(this, 0, sizeof(LASvlr)); };
 };
@@ -106,10 +108,10 @@ class LASLIB_DLL LASevlr
 {
 public:
   U16 reserved;
-  CHAR user_id[16]; 
+  CHAR user_id[LAS_VLR_USER_ID_CHAR_LEN]; 
   U16 record_id;
   I64 record_length_after_header;
-  CHAR description[32];
+  CHAR description[LAS_HEADER_CHAR_LEN];
   U8* data;
   LASevlr() { memset(this, 0, sizeof(LASevlr)); };
 };
@@ -205,8 +207,8 @@ public:
   U8 project_ID_GUID_data_4[8];            // starts at byte  16
   U8 version_major;                        // starts at byte  24
   U8 version_minor;                        // starts at byte  25
-  CHAR system_identifier[32];              // starts at byte  26
-  CHAR generating_software[32];            // starts at byte  58
+  CHAR system_identifier[LAS_HEADER_CHAR_LEN]; // [32]chars+\0 - starts at byte  26
+  CHAR generating_software[LAS_HEADER_CHAR_LEN]; // [32]chars+\0 at byte  58
   U16 file_creation_day;                   // starts at byte  90
   U16 file_creation_year;                  // starts at byte  92
   U16 header_size;                         // starts at byte  94
@@ -333,6 +335,10 @@ public:
     x_scale_factor = 0.01;
     y_scale_factor = 0.01;
     z_scale_factor = 0.01;
+    x_offset = 0.0;
+    y_offset = 0.0;
+    z_offset = 0.0;
+    z_from_attrib = -1;
   };
 
   void clean_user_data_in_header()
@@ -482,21 +488,27 @@ public:
   {
     if (strncmp(file_signature, "LASF", 4) != 0)
     {
-      LASMessage(LAS_ERROR, "wrong file signature '%4s'", file_signature);
+      laserror("wrong file signature '%4s'", file_signature);
       return FALSE;
     }
     if ((version_major != 1) || (version_minor > 4))
     {
-      LASMessage(LAS_WARNING, "unknown version %d.%d (should be 1.0 or 1.1 or 1.2 or 1.3 or 1.4)", version_major, version_minor);
+      LASMessage(LAS_WARNING, "unknown version %d.%d (allowed 1.0-1.4)", version_major, version_minor);
+    }
+    U8 pdf = point_data_format & 0x7f; // remove LAZ bit 7
+    if ((version_minor < 4) && (pdf >= 6) ||
+        (version_minor < 3) && (pdf >= 4) ||
+        (version_minor < 2) && (pdf >= 2)) {
+        LASMessage(LAS_WARNING, "LAS version %d.%d does not allow point format %d", version_major, version_minor, pdf);
     }
     if (header_size < 227)
     {
-      LASMessage(LAS_ERROR, "header size is %d but should be at least 227", header_size);
+      laserror("header size is %d but should be at least 227", header_size);
       return FALSE;
     }
     if (offset_to_point_data < header_size)
     {
-      LASMessage(LAS_ERROR, "offset to point data %d is smaller than header size %d", offset_to_point_data, header_size);
+      laserror("offset to point data %d is smaller than header size %d", offset_to_point_data, header_size);
       return FALSE;
     }
     if (x_scale_factor == 0)
@@ -580,7 +592,7 @@ public:
       {
         number_of_variable_length_records++;
         offset_to_point_data += 54;
-        vlrs = (LASvlr*)realloc(vlrs, sizeof(LASvlr)*number_of_variable_length_records);
+        vlrs = (LASvlr*)realloc_las(vlrs, sizeof(LASvlr)*number_of_variable_length_records);
       }
     }
     else
@@ -589,33 +601,37 @@ public:
       offset_to_point_data += 54;
       vlrs = (LASvlr*)malloc(sizeof(LASvlr));
     }
-    memset((void*)&(vlrs[i]), 0, sizeof(LASvlr));
-    vlrs[i].reserved = 0; // used to be 0xAABB
-    strncpy(vlrs[i].user_id, user_id, 16);
-    vlrs[i].record_id = record_id;
-    vlrs[i].record_length_after_header = record_length_after_header;
-    if (keep_description && found_description)
-    {
-      // do nothing
+    if (vlrs != nullptr) {
+      memset((void*)&(vlrs[i]), 0, sizeof(LASvlr));
+      vlrs[i].reserved = 0; // used to be 0xAABB
+      strncpy_las(vlrs[i].user_id, LAS_VLR_USER_ID_CHAR_LEN, user_id, LAS_VLR_USER_ID_CHAR_LEN-1);
+      vlrs[i].record_id = record_id;
+      vlrs[i].record_length_after_header = record_length_after_header;
+
+      if (keep_description && found_description)
+      {
+        // do nothing
+      }
+      else if (description)
+      {
+        // to be optimized: could hold 32 chars without trailing 0
+        snprintf(vlrs[i].description, sizeof(vlrs[i].description), "%.31s", description);
+      }
+      else
+      {
+        snprintf(vlrs[i].description, sizeof(vlrs[i].description), "by LAStools of rapidlasso GmbH");
+      }
+      if (record_length_after_header)
+      {
+        offset_to_point_data += record_length_after_header;
+        vlrs[i].data = data;
+      }
+      else
+      {
+        vlrs[i].data = 0;
+      }
     }
-    else if (description)
-    {
-      sprintf(vlrs[i].description, "%.31s", description);
-    }
-    else
-    {
-      sprintf(vlrs[i].description, "by LAStools of rapidlasso GmbH");
-    }
-    if (record_length_after_header)
-    {
-      offset_to_point_data += record_length_after_header;
-      vlrs[i].data = data;
-    }
-    else
-    {
-      vlrs[i].data = 0;
-    }
-		return TRUE;
+    return TRUE;
   };
 
   const LASvlr* get_vlr(const CHAR* user_id, U16 record_id) const
@@ -649,7 +665,7 @@ public:
         if (number_of_variable_length_records)
         {
           vlrs[i] = vlrs[number_of_variable_length_records];
-          vlrs = (LASvlr*)realloc(vlrs, sizeof(LASvlr)*number_of_variable_length_records);
+          vlrs = (LASvlr*)realloc_las(vlrs, sizeof(LASvlr)*number_of_variable_length_records);
         }
         else
         {
@@ -707,7 +723,7 @@ public:
       if (i == number_of_extended_variable_length_records)
       {
         number_of_extended_variable_length_records++;
-        evlrs = (LASevlr*)realloc(evlrs, sizeof(LASevlr)*number_of_extended_variable_length_records);
+        evlrs = (LASevlr*)realloc_las(evlrs, sizeof(LASevlr)*number_of_extended_variable_length_records);
       }
     }
     else
@@ -715,29 +731,32 @@ public:
       number_of_extended_variable_length_records = 1;
       evlrs = (LASevlr*)malloc(sizeof(LASevlr)*number_of_extended_variable_length_records);
     }
-    evlrs[i].reserved = 0; // used to be 0xAABB
-    strncpy(evlrs[i].user_id, user_id, 16);
-    evlrs[i].record_id = record_id;
-    evlrs[i].record_length_after_header = record_length_after_header;
-    if (keep_description && found_description)
-    {
-      // do nothing
-    }
-    else if (description)
-    {
-      sprintf(evlrs[i].description, "%.31s", description);
-    }
-    else
-    {
-      sprintf(evlrs[i].description, "by LAStools of rapidlasso GmbH");
-    }
-    if (record_length_after_header)
-    {
-      evlrs[i].data = data;
-    }
-    else
-    {
-      evlrs[i].data = 0;
+    if (evlrs != nullptr) {
+      evlrs[i].reserved = 0;  // used to be 0xAABB
+      strncpy_las(evlrs[i].user_id, LAS_VLR_USER_ID_CHAR_LEN, user_id);
+      evlrs[i].record_id = record_id;
+      evlrs[i].record_length_after_header = record_length_after_header;
+
+      if (keep_description && found_description)
+      {
+        // do nothing
+      }
+      else if (description)
+      {
+        snprintf(evlrs[i].description, sizeof(evlrs[i].description), "%.31s", description);
+      }
+      else
+      {
+        snprintf(evlrs[i].description, sizeof(evlrs[i].description), "by LAStools of rapidlasso GmbH");
+      }
+      if (record_length_after_header)
+      {
+        evlrs[i].data = data;
+      }
+      else
+      {
+        evlrs[i].data = 0;
+      }
     }
   };
 
@@ -758,7 +777,7 @@ public:
         if (number_of_extended_variable_length_records)
         {
           evlrs[i] = evlrs[number_of_extended_variable_length_records];
-          evlrs = (LASevlr*)realloc(evlrs, sizeof(LASevlr)*number_of_extended_variable_length_records);
+          evlrs = (LASevlr*)realloc_las(evlrs, sizeof(LASevlr)*number_of_extended_variable_length_records);
         }
         else
         {
@@ -1036,6 +1055,21 @@ public:
     {
       return remove_vlr("LASF_Spec", 4);
     }
+  }
+
+  std::string get_GUID() {
+    char guid_buffer[256];
+    snprintf(
+        guid_buffer, sizeof(guid_buffer), "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X", project_ID_GUID_data_1, project_ID_GUID_data_2,
+        project_ID_GUID_data_3, project_ID_GUID_data_4[0], project_ID_GUID_data_4[1], project_ID_GUID_data_4[2], project_ID_GUID_data_4[3],
+        project_ID_GUID_data_4[4], project_ID_GUID_data_4[5], project_ID_GUID_data_4[6], project_ID_GUID_data_4[7]);
+    return std::string(guid_buffer);
+  }
+
+  std::string get_version() {
+    char version_buffer[16];
+    snprintf(version_buffer, sizeof(version_buffer), "%d.%d", version_major, version_minor);
+    return std::string(version_buffer);
   }
 
   ~LASheader()

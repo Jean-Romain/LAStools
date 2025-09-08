@@ -14,12 +14,19 @@ By default the output of lasinfo goes to stderr. The output can
 be suppressed with '-quiet' or changed to '-stdout'. To write
 to a particular file use '-o output.txt' or '-otxt' which stores
 the lasinfo report to "lidar.txt" assuming the file has the name
-"lidar.las". With the option '-odix _info' you change the name
+"lidar.laz". With the option '-odix _info' you change the name
 to "lidar_info.txt" and with '-odir E:\reports' you choose a
 particular directory. These options are especially useful in
 batch mode such as:
 
 lasinfo64 -i *.laz -otxt -odir ..\reports -odix _info -cores 3
+
+In addition, the lasinfo output can be provided in JSON format. To save 
+the output to a JSON file, use either the '-ojs' option or specify an output 
+file name with the '-o' option and the '.json' extension. The '-js' option can 
+be used to output the JSON format directly.
+
+lasinfo64 -i *.laz -ojs -js -o output_file.json
 
 The tool can also be used to modify various other entries in
 the header as described below. This needs to be done with care
@@ -51,194 +58,225 @@ listed in the GUI are:
 -auto_date
 -set_global_encoding 1
 
+lasinfo provides detail information about this VLR records:
+    (user_id/record_id)  
+    LASF_Projection  
+       34735 (GeoTIFF GeoKeyDirectoryTag)  
+       34736 (GeoTIFF GeoDoubleParamsTag)  
+       34737 (GeoTIFF GeoAsciiParamsTag)  
+       2111 (OGC Math Transform WKT)  
+       2112 (OGC Coordinate System WKT)  
+    LASF_Spec      
+       0 (Classification Lookup)  
+       2 (Histogram)  
+       3 (Text Area Description)  
+       4 (Extra Bytes)  
+       100..354 (Waveform Packet Descriptor)  
+    Raster LAZ  
+       7113 Raster LAZ information  
+    copc  
+       1 copc information  
+
 ## Examples
 
-    lasinfo64 lidar.las
+    lasinfo64 lidar.laz
 
 reports all information to stderr.
 
 
-    lasinfo64 -i lidar1.las lidar2.las -merged
+    lasinfo64 -i lidar1.laz lidar2.laz -merged
 
 reports all information for a merged LAS file that contains the
-merged contents of lidar1.las and lidar2.las to stderr.
+merged contents of lidar1.laz and lidar2.laz to stderr.
 
 
-    lasinfo64 -i lidar1.las lidar2.las
+    lasinfo64 -i lidar1.laz lidar2.laz
 
 reports the information of the two files individually to stderr.
 
 
-    lasinfo64 *.las -merged -stdout
+    lasinfo64 *.laz -merged -stdout
 
 reports information for all files merged to stdout.
 
 
-    lasinfo64 *.las -stdout
+    lasinfo64 *.laz -stdout
 
 reports information for all files individually to stdout.
 
 
-    lasinfo64 *.las -odix _info
+    lasinfo64 *.laz -odix _info
 
 reports information for all files individually to *_info.txt
 
 
-    lasinfo64 -i lidar.las -o lidar_info.txt 
+    lasinfo64 -i lidar.laz -o lidar_info.txt 
 
 reports the information to a text file called lidar_info.txt.
 
 
-    lasinfo64 -i lidar.las -no_header
+    lasinfo64 -i lidar.laz -no_header
 
 supresses the reporting of the header information (short: '-nh').
 
 
-    lasinfo64 -i lidar.las -no_vlrs
+    lasinfo64 -i lidar.laz -no_vlrs
 
 supresses the reporting of variable length records (short: '-nv').
 
 
-    lasinfo64 -i lidar.las -no_min_max
+    lasinfo64 -i lidar.laz -no_min_max
 
 supresses the reporting of minimum/maximum value for each attribute
 of the point records (short: '-nmm').
 
 
-    lasinfo64 -i lidar.las -no_check_outside
+    lasinfo64 -i lidar.laz -no_check_outside
 
 supresses checking whether points fall outside of the bounding box that
 is reported in the header (short: '-nco').
 
 
-    lasinfo64 -i lidar.las -report_outside
+    lasinfo64 -i lidar.laz -report_outside
 
 reports the index and the coordinates of each point that falls outside
 of the bounding box that is reported in the header (short: '-ro').
 
 
-    lasinfo64 -i lidar.las -nh -nv -progress 1000000
+    lasinfo64 -i lidar.laz -nh -nv -progress 1000000
 
 supresses reporting of the header information and the vlrs and reports
 progress each time 1,000,000 points are parsed.
 
 
-    lasinfo64 -i lidar.las -no_check
+    lasinfo64 -i lidar.laz -no_check
 
 only reports header information (short: '-nc'). does not parse the points.
 
 
-    lasinfo64 -i lidar.las -compute_density
+    lasinfo64 -i lidar.laz -compute_density
 
 computes and reports a good estimate of the point density (short: '-cd').
 
 
-    lasinfo64 -i lidar.las -repair_bb
+    lasinfo64 -i lidar.laz -repair_bb
 
 corrects missing or wrong bounding box info in the header.
 
 
-    lasinfo64 -i lidar.las -repair_counters
+    lasinfo64 -i lidar.laz -repair_counters
 
 corrects missing or wrong point number info in the header.
 
 
-    lasinfo64 -i lidar.las -set_file_source_ID 27
+    lasinfo64 -i lidar.laz -set_file_source_ID 27
 
 sets the file source ID in the LAS header to 27.
 
 
-    lasinfo64 -i lidar.las -auto_date
+    lasinfo64 -i lidar.laz -auto_date
 
 sets the file creation day/year in the header to the creation date of the file.
 
 
-    lasinfo64 -i lidar.las -set_file_creation 8 2007
+    lasinfo64 -i lidar.laz -set_file_creation 8 2007
 
 sets the file creation day/year in the header to 8/2007
 
 
-    lasinfo64 -i lidar.las -set_system_identifier "hello world!"
+    lasinfo64 -i lidar.laz -set_system_identifier "hello world!"
 
 copies the first 31 characters of the string into the system_identifier field of the header 
 
 
-    lasinfo64 -i lidar.las -set_generating_software "this is a test (-:"
+    lasinfo64 -i lidar.laz -set_generating_software "this is a test (-:"
 
 copies the first 31 characters of the string into the generating_software field of the header 
 
 
-    lasinfo64 -i lidar.las -set_bounding_box 4100000 1800000 150 4110000 1810000 400
+    lasinfo64 -i lidar.laz -set_bounding_box 4100000 1800000 150 4110000 1810000 400
 
 sets the bounding box in the header to min_x=4100000, max_x=4110000, min_y=1800000, ...
 
 
-    lasinfo64 -i lidar.las -set_offset 3000000 1000000 0
+    lasinfo64 -i lidar.laz -set_offset 3000000 1000000 0
 
 CAREFUL! sets the offset in the LAS header to 3000000 1000000 0 without changing
 the point coordinates. hence this will, in general, translate the point cloud.
 
 
-    lasinfo64 -i lidar.las -set_scale 0.001 0.001 0.001
+    lasinfo64 -i lidar.laz -set_scale 0.001 0.001 0.001
 
 CAREFUL! sets the scale in the LAS header to 0.001 0.001 0.001 without changing
 the point coordinates. hence this will, in general, scale the point cloud.
 
 
-    lasinfo64 -i lidar.las -set_global_encoding 1
+    lasinfo64 -i lidar.laz -set_global_encoding 1
 
 CAREFUL! sets the global encoding field of the LAS header to 1 without checking
 whether this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_version 1.1
+    lasinfo64 -i lidar.laz -set_version 1.1
 
 CAREFUL! sets the version field of the LAS header to 1.1 without checking whether
 this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_header_size 235
+    lasinfo64 -i lidar.laz -set_header_size 235
 
 CAREFUL! sets the header size field of the LAS header to 235 without checking
 whether this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_offset_to_point_data 460
+    lasinfo64 -i lidar.laz -set_offset_to_point_data 460
 
 CAREFUL! sets the offset to point data field of the LAS header to 460 without
 checking whether this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_point_data_format 1
+    lasinfo64 -i lidar.laz -set_point_data_format 1
 
 CAREFUL! sets the point data format field of the LAS header to point type 1
 without checking whether this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_point_data_record_length 32
+    lasinfo64 -i lidar.laz -set_point_data_record_length 32
 
 CAREFUL! sets the point data record length field of the LAS header to size 32
 without checking whether this will corrupt the file.
 
 
-    lasinfo64 -i lidar.las -set_start_of_waveform_data_packet_record 0
+    lasinfo64 -i lidar.laz -set_start_of_waveform_data_packet_record 0
 
 CAREFUL! sets the start of waveform data packet record field of the LAS header
 to 0 without checking whether this will corrupt the file.
 
+Querying CRS representations and information, based on the input file.
+The [wkt] WKT representation, the [js] PROJJSON representation, the [str] PROJ string, 
+the [epsg] EPSG code, the [el] ellipsoid information, the [datum] datum information and 
+the [cs] coordinate system information can be queried.
+CAREFUL! If a CRS object was not created from a PROJ string, exporting it to a PROJ string will in 
+most cases lead to a loss of information. This can potentially lead to incorrect transformations. 
+The use of PROJ strings should only be used with advanced knowledge.
 
-lasinfo64 -i lidar.las  
-lasinfo64 -i lidar.las -compute_density -o lidar_info.txt  
-lasinfo64 -i *.las  
-lasinfo64 -i *.las -single -otxt  
-lasinfo64 -no_header -no_vlrs -i lidar.laz  
-lasinfo64 -nv -nc -stdout -i lidar.las  
-lasinfo64 -nv -nc -stdout -i *.laz -single | grep version  
-lasinfo64 -i *.laz -subseq 100000 100100 -histo user_data 8  
-lasinfo64 -i *.las -repair  
-lasinfo64 -i *.laz -repair_bb -set_file_creation 8 2007  
-lasinfo64 -i *.las -repair_counters -set_version 1.2  
-lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_software "this is a test (-:"
+    lasinfo64 -i lidar.laz -proj_info wkt js str epsg el datum cs
+
+
+Further examples
+
+    lasinfo64 -i lidar.laz  
+    lasinfo64 -i lidar.laz -compute_density -o lidar_info.txt  
+    lasinfo64 -i *.las  
+    lasinfo64 -i *.laz -single -otxt  
+    lasinfo64 -no_header -no_vlrs -i lidar.laz  
+    lasinfo64 -nv -nc -stdout -i lidar.las  
+    lasinfo64 -nv -nc -stdout -i *.laz -single | grep version  
+    lasinfo64 -i *.laz -subseq 100000 100100 -histo user_data 8  
+    lasinfo64 -i *.las -repair  
+    lasinfo64 -i *.laz -repair_bb -set_file_creation 8 2007  
+    lasinfo64 -i *.las -repair_counters -set_version 1.2  
+    lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_software "this is a test (-:"
 
 
 ## lasinfo specific arguments
@@ -248,10 +286,11 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -auto_date                          : set (in place) creation year / day of year in header automatically based on file creation date  
 -cd                                 : compute rough approximation for covered area, density, and spacing  
 -compute_density                    : compute rough approximation for covered area, density, and spacing  
--cores [n]                          : process multiple inputs on [n] cores in parallel  
 -delete_empty                       : delete LAS files with zero points  
 -gps_week                           : compute the GPS week (if data is Adjusted Standard GPS time)  
 -gw                                 : compute the GPS week (if data is Adjusted Standard GPS time)  
+-histo [m] [n]                      : histogram output about [m] with step width [n]  
+-histo_avg [m] [n] [o]              : histogram output about [m] with step width [n] and average [o]  
 -nc                                 : don't parse points (only check header and VLRs)  
 -nco                                : don't check whether points fall outside of LAS header bounding box  
 -nh                                 : don't output LAS header information  
@@ -262,18 +301,23 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -no_min_max                         : don't output point minimum / maximum entry information  
 -no_returns                         : don't output return information  
 -no_vlrs                            : don't output VLR information  
--no_warnings                        : don't output WARNINGs  
+-no_warnings                        : don't output warnings  
 -nr                                 : don't output return information  
 -nv                                 : don't output VLR information  
--nw                                 : don't output WARNINGs  
+-nw                                 : don't output warnings  
 -otxt                               : output as textfile  
+-ojs                                : output as json file  
+-js                                 : output in json format  
+-json                               : output in json format  
 -progress [n]                       : report progress every [n] points  
--rename [n]                         : renames input file 'fusa.laz' to '[n]_277750_6122250.laz'  
+-proj_info [wkt] [js] [str] [epsg] [el] [datum] [cs] : get CRS representations and information of the input file: [wkt] WKT, [js] PROJJSON, [str] PROJ string or [epsg] EPSG code representation and [el] ellipsoid, [datum] datum or [cs] coordinate system information  
+-rename [n]                         : renames input file 'fusa.laz' to '[n]_123_456.laz' where 123 and 456 is the x and y header minimum value
 -repair                             : repair both bounding box and counters  
 -repair_bb                          : repair bounding box  
 -repair_counters                    : set (in place) the counters for point number and (extended) return histograms in header  
 -report_outside                     : report attributes of each point that falls outside of LAS header bounding box  
 -ro                                 : report attributes of each point that falls outside of LAS header bounding box  
+-scale_header [x] [y] [z]           : scale whole file by scaling the header values with factor [x] [y] [z] or [xyz] (one for all) (64bit only)   
 -set_bb [x1] [y1] [z1] [x2] [y2] [z2]: set bounding box to [x1] [y1] [z1] [x2] [y2] [z2]  
 -set_bounding_box [x1] [y1] [z1] [x2] [y2] [z2]: set bounding box to [x1] [y1] [z1] [x2] [y2] [z2]  
 -set_creation_date [day] [year]     : set creation date to [day] [year]  
@@ -281,20 +325,9 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -set_file_source_ID_from_point_source_ID: set (in place) file source ID in header to value that *all* points have in point source ID  
 -set_generating_software [n]        : set generating software header entry to [n] (max. 31 char string)  
 -set_geotiff_epsg [n]               : adds EPSG code [n] in-place when other GeoTIFF tags present  
--set_global_encoding [0/1]          : CAREFUL! sets the global encoding field of the LAS header to [0/1] without checking whether this will corrupt the file  
 -set_GUID [n]                       : sets the GUID [n] in header (assuming it is given in example hexadecimal format shown)  
--set_header_size [n]                : CAREFUL! sets the header size field of the LAS header to [n] without checking whether this will corrupt the file  
--set_number_of_point_records [n]    : set number of point records to [n]  
--set_number_of_points_by_return  [m] [n] [o] [p] [q]: set "number of points by return" header info [m] [n] [o] [p] [q]  
--set_number_of_variable_length_records [n]: set number of variable length records to [n]  
--set_offset [x] [y] [z]             : CAREFUL! sets the offset in the LAS header to [x] [y] [z] without changing the point coordinates  
--set_offset_to_point_data [n]       : CAREFUL! sets the offset to point data field of the LAS header to [n] without checking whether this will corrupt the file  
--set_point_data_format [n]          : CAREFUL! sets the point data format field of the LAS header to point type [n]{1-10} without checking whether this will corrupt the file  
--set_point_data_record_length [n]   : CAREFUL! sets the point data record length field of the LAS header to size [n] without checking whether this will corrupt the file  
 -set_scale [x] [y] [z]              : quantize ASCII points with [x] [y] [z] (unit meters)  
--set_start_of_waveform_data_packet_record [n]: CAREFUL! sets the start of waveform data packet record field of the LAS header to [n] without checking whether this will corrupt the file  
 -set_system_identifier [n]          : set the system identifier header entry to [n] (max 31 characters)  
--set_version [n]                    : CAREFUL! sets the version field of the LAS header to [n]{e.g. 1.2}  without checking whether this will corrupt the file  
 -set_vlr_description [m] [n]        : set description of vlr [m] to [n]  
 -set_vlr_record_id [m] [n]          : set record id of vlr [m] to [n]  
 -set_vlr_user_id [m] [n]            : set user id of vlr [m] to [n]  
@@ -310,17 +343,39 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -suppress_scan_angle                : do not decompress scan angle for native-compressed LAS 1.4 point types 6 or higher  
 -suppress_user_data                 : do not decompress user data field for native-compressed LAS 1.4 point types 6 or higher  
 -suppress_z                         : do not decompress z coordinates for native-compressed LAS 1.4 point types 6 or higher  
--week_to_adjusted [n]               : converts time stamps from GPS week [n] to Adjusted Standard GPS  
+-week_to_adjusted [n]               : converts time stamps from GPS week [n] to Adjusted Standard GPS
+-wkt_format                         : formats WKT output with line breaks and indent for better readability
+
+## lasinfo patch arguments
+
+CAREFUL! this arguments patch LAS/LAZ files and they will become probably invalid
+
+-set_number_of_point_records [n]    : set number of point records to [n]  
+-set_number_of_points_by_return  [m] [n] [o] [p] [q]: set "number of points by return" header info [m] [n] [o] [p] [q]  
+-set_number_of_variable_length_records [n]: set number of variable length records to [n]  
+-set_global_encoding [0/1]          : CAREFUL! sets the global encoding field of the LAS header to [0/1] without checking whether this will corrupt the file  
+-set_header_size [n]                : CAREFUL! sets the header size field of the LAS header to [n] without checking whether this will corrupt the file  
+-set_offset [x] [y] [z]             : CAREFUL! sets the offset in the LAS header to [x] [y] [z] without changing the point coordinates  
+-set_offset_to_point_data [n]       : CAREFUL! sets the offset to point data field of the LAS header to [n] without checking whether this will corrupt the file  
+-set_point_data_format [n]          : CAREFUL! sets the point data format field of the LAS header to point type [n]{1-10} without checking whether this will corrupt the file  
+-set_point_data_record_length [n]   : CAREFUL! sets the point data record length field of the LAS header to size [n] without checking whether this will corrupt the file  
+-set_version [n]                    : CAREFUL! sets the version field of the LAS header to [n]{e.g. 1.2}  without checking whether this will corrupt the file  
+-set_start_of_waveform_data_packet_record [n]: CAREFUL! sets the start of waveform data packet record field of the LAS header to [n] without checking whether this will corrupt the file  
 
 ### Basics
--cpu64   : start 64 bit executable (instead of default 32 bit executable)  
--fail    : fail if license expired or invalid  
--gui     : start with files loaded into GUI  
--h       : print help output  
--quiet   : nothing reported in console  
--v       : verbose output (print extra information)  
--version : reports this tool's version number  
--wait    : wait for <ENTER> in the console at end of process  
+-cores [n]      : process multiple inputs on [n] cores in parallel  
+-h, -help       : print help output  
+-v, -verbose    : verbose output (print extra information)  
+-vv             : very verbose output (print even more information)  
+-silent         : only output on errors or warnings
+-quiet          : no output at all
+-force          : continue, even if serious warnings occur  
+-errors_ignore  : continue, even if errors occur (if possible). Use with caution!
+-print_log_stats: print additional log statistics  
+-cpu64          : force 32bit version to start 64 bit in multi core (obsolete)
+-gui            : start with files loaded into GUI  
+-version        : reports this tool's version number  
+
 
 ## Module arguments
 
@@ -328,7 +383,6 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -buffered [n]          : define read or write buffer of size [n]{default=262144}  
 -chunk_size [n]        : set chunk size [n] in number of bytes  
 -comma_not_point       : use comma instead of point as decimal separator  
--histo_avg [m] [n] [o] : histogram output about [m] with step width [n] and average [o]  
 -neighbors [n]         : set neighbors filename or wildcard [n]  
 -neighbors_lof [n]     : set neighbors list of files [fnf]  
 -stored                : use in memory reader  
@@ -360,8 +414,10 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -drop_RGB_green [min] [max]         : drop points with green color value between [min] and [max]  
 -drop_RGB_red [min] [max]           : drop points with red color value between [min] and [max]  
 -force_RGB                          : force the use of the RGB value even if the point format does not support RGB  
+-keep_NDVI [min] [max]              : keep NDVI (Normalized Difference Vegetation Index) between [min] [max]  
 -keep_NDVI_from_CIR [min] [max]     : keep NDVI (Normalized Difference Vegetation Index) from CIR between [min] [max]  
 -keep_NDVI_green_is_NIR [min] [max] : keep NDVI (Normalized Difference Vegetation Index) where green is NIR between [min] [max]  
+-keep_NDVI_blue_is_NIR [min] [max]  : keep NDVI (Normalized Difference Vegetation Index) where blue is NIR between [min] [max]  
 -keep_NDVI_intensity_is_NIR [min] [max]: keep NDVI (Normalized Difference Vegetation Index) where intensity is NIR between [min] [max]  
 -keep_RGB_blue [m] [n]              : keep points with RGB blue color values between [min] [max]  
 -keep_RGB_green [min] [max]         : keep points with green color value between [min] and [max]  
@@ -394,7 +450,7 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 ### Coordinates
 -add_attribute_to_z [n]             : add value of attribute [n] to z value  
 -add_scaled_attribute_to_z [m] [n]  : scale attribute [m] value by [n] and add to z value  
--auto_reoffset                      : puts a reasonable offset in the header and translates the points accordingly  
+-auto_reoffset                      : puts a reasonable offset in the header and translates the points accordingly. Only applicable to LAS/LAZ input files  
 -bin_Z_into_point_source [n]        : set point source to z/[n]  
 -clamp_raw_z [min] [max]            : limit raw z values to [min] and [max]  
 -clamp_z [min] [max]                : limit z values to [min] and [max]  
@@ -437,6 +493,7 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -keep_z [m] [n]                     : keep points with z value between [m] and [n]  
 -keep_z_above [n]                   : keep points with z value above [n]  
 -keep_z_below [n]                   : keep points with z value below [n]  
+-offset_adjust                      : adjusting the offset based on the results of point operations and transformations
 -reoffset [x] [y] [z]               : puts a new offset [x] [y] [z] into the header and translates the points accordingly  
 -rescale [x] [y] [z]                : puts a new scale [x] [y] [z] into the header and rescales the points accordingly  
 -rescale_xy [x] [y]                 : rescale x y by [x] [y]  
@@ -451,7 +508,7 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -switch_x_y                         : exchange x and y value  
 -switch_x_z                         : exchange x and z value  
 -switch_y_z                         : exchange z and x value  
--transform_affine [a],[b],[c],[d]   : transform input using affine transformation with [a],[b],[c],[d]  
+-transform_affine [k,w,x,y]         : transform by k*cos(w)+k*sin(w)+tx;k*cos(w)+k*sin(w)+ty (angle in second of arc)  
 -transform_helmert [m] [n] [o]      : do a helmert transformation with 3 or 7 comma separated parameters [n] ...  
 -transform_matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]: transform input using matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]  
 -translate_raw_x [n]                : translate raw x value by [n]  
@@ -459,6 +516,9 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -translate_raw_xyz [x] [y] [z]      : translate raw coordinates by [x] [y] [z]  
 -translate_raw_y [n]                : translate raw y value by [n]  
 -translate_raw_z [n]                : translate raw z value by [n]  
+-translate_scale_translate_x [m] [n]: calculate x value as (x–[m])*[n]+[m]  
+-translate_scale_translate_y [m] [n]: calculate y value as (y–[m])*[n]+[m]  
+-translate_scale_translate_z [m] [n]: calculate z value as (z–[m])*[n]+[m]  
 -translate_then_scale_x [m] [n]     : translate x value by [m] and scale by [n]  
 -translate_then_scale_y [m] [n]     : translate y value by [m] and scale by [n]  
 -translate_then_scale_z [m] [n]     : translate z value by [m] and scale by [n]  
@@ -522,6 +582,7 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -faf                           : input files are flightlines. do ***NOT*** use this for tiled input  
 -faf_index [n]                 : set files are flightlines index [n]  
 -files_are_flightlines         : input files are flightlines. do ***NOT*** use this for tiled input  
+-drop_edge_of_flight_line      : drop points with "Edge of Flight Line" flag set  
 -keep_edge_of_flight_line      : keep points with "Edge of Flight Line" flag set  
 -keep_scan_direction_change    : keep points with changed scan direction flag  
 -set_edge_of_flight_line [0/1] : set "Edge of Flight Line" flag to [0/1]  
@@ -845,12 +906,10 @@ lasinfo64 -i *.laz -set_system_identifier "hello world!" -set_generating_softwar
 -help : print help output
 
 ### parse
-The '-parse [xyz]' flag specifies how to interpret
-each line of the ASCII file. For example, 'tsxyzssa'
-means that the first number is the gpstime, the next
-number should be skipped, the next three numbers are
-the x, y, and z coordinate, the next two should be
-skipped, and the next number is the scan angle.
+The '-parse [xyz]' flag specifies how to interpret each line of the ASCII file.
+For example, 'tsxyzssa' means that the first number is the gpstime, the next
+number should be skipped, the next three numbers are the x, y, and z coordinate,
+the next two should be skipped, and the next number is the scan angle.
 
 The other supported entries are:  
   x : [x] coordinate  
@@ -872,7 +931,7 @@ The other supported entries are:
   o : [o]verlap flag of LAS 1.4 point types 6, 7, 8  
   l : scanner channe[l] of LAS 1.4 point types 6, 7, 8  
   E : terrasolid [E]hco Encoding  
-  c : [c]lassification  
+  c : [c]lassification. If extended classes are used: Use o,l or I to force 1.4 format.  
   u : [u]ser data  
   p : [p]oint source ID  
   e : [e]dge of flight line flag  
@@ -894,22 +953,47 @@ Supported [sep] values:
   hyphen
   space
 
-## License
+### aggregate options
+This parameters can be used in "-histo" and "-histo_avg" argument as first parameter  
+    x                     : x coordinate  
+    y                     : x coordinate  
+    z                     : x coordinate  
+    X                     : X integer data value  
+    Y                     : X integer data value  
+    Z                     : X integer data value  
+    intensity  
+    classification  
+    extended_scan_angle  
+    scan_angle  
+    return_number  
+    number_of_returns  
+    user_data  
+    point_source  
+    gps_time  
+    scanner_channel  
+    R                    : RGB red value
+    G                    : RGB green value
+    B                    : RGB blue value
+    I                    : intensity
+    attribute0..9        : extra byte attribute value
+    wavepacket_index  
+    wavepacket_offset  
+    wavepacket_size  
+    wavepacket_location  
+
+## Licensing
 
 This tool is free to use.
 
 ## Support
 
-To get more information about a tool just goto the
-[LAStools Google Group](http://groups.google.com/group/lastools/)
-and enter the tool name in the search function.
-You will get plenty of samples to this tool.
+1. We invite you to join our LAStools Google Group (http://groups.google.com/group/lastools/).
+   If you are looking for information about a specific tool, enter the tool name in the search 
+   function and you'll find all discussions related to the respective tool. 
+2. Customer Support Page: https://rapidlasso.de/customer-support/.  
+3. Download LAStools: https://rapidlasso.de/downloads/.  
+4. Changelog: https://rapidlasso.de/changelog/.  
 
-To get further support see our
-[rapidlasso service page](https://rapidlasso.de/service/)
 
-Check for latest updates at
-https://rapidlasso.de/category/blog/releases/
-
-If you have any suggestions please let us (info@rapidlasso.de) know.
-
+If you want to send us feedback or have questions that are not answered in the resources above, 
+please email to info@rapidlasso.de.

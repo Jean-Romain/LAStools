@@ -20,10 +20,10 @@ this file is deprecated - see *.md version of this file
   for example from latitude/longitude to UTM or the stateplane
   of Ohio_North or to Earth-centered Earth-fixed (ECEF). You can
   also use common EPSG codes with '-epsg 32754'. For LAS 1.4 it
-  is important to '-set_ogc_wkt' which translates the GeoTIFF
+  is important to '-set_ogc_wkt' or '-set_proj_wkt' which translates the GeoTIFF
   keys into an CRS string in the OGC WKT format and adds them as
   the payload of the corresponding VLR. For LAS 1.4 files you
-  can use '-set_ogc_wkt_in_evlr' to put that string into the
+  can use '-set_ogc_wkt_in_evlr' or '-set_proj_wkt_in_evlr' to put that string into the
   EVLR instead of the VLR (but we don't recommend that).
 
   Another typical use is extract only first (-first_only) or only
@@ -186,6 +186,30 @@ of in.las that have point.Z<1000 or point.Z>4000 and stores all
 surviving points to out.las (use lasinfo.exe to see the range of
 point.Z).
 
+Available options for using the PROJ library for transformations between 
+Coordinate Reference Systems (CRSs). Specifying the source CRS is optional 
+for all commands. If no source CRS is specified, the tool will attempt to extract this 
+information from the header of the input file in.las, which is recommended.
+There is a hierarchy for determining the source CRS for the PROJ transformation:
+1. the source CRS is passed as an argument.
+2. if not, the WKT is searched for in the header of the source file.
+3. if no WKT is available, it is generated from the GeoTIFF data.
+4. if this is not possible, the EPSG code from the GeoTIFF is used, which can lead to inaccuracies as GeoTIFF arguments could be ignored.
+
+Files with CompoundCRS are not yet supported for transformations using PROJ in LAStools.
+The recommended methods for specifying CRSs are the use of EPSG codes or 
+WKT representations, as these adhere to well-defined standards:
+ 
+>> las2las64 -i in.las -o out.las -proj_epsg 32633 4326
+>> las2las64 -i in.las -o out.las -proj_wkt filename_source_wkt filename_target_wkt
+
+The methods using the json representation or the PROJ string are only recommended 
+for advanced and experienced users. When using the PROJ string, a single PROJ string 
+can also be used directly to describe the transformation or operation.
+
+>> las2las64 -i in.las -o out.las -proj_json filename_source_json filename_target_json
+>> las2las64 -i in.las -o out.las -proj_string "proj_string_source" "proj_string_target"
+
 other commandline arguments are
 
 -auto_reoffset                 : puts a reasonable offset in the header and translates the points accordingly
@@ -209,6 +233,8 @@ other commandline arguments are
 -set_user_data 0               : sets all user_data fields to zero
 -set_ogc_wkt                   : translate GeoTIFF keys into CRS string in OGC WKT format and add it as VLR
 -set_ogc_wkt_in_evlr           : same as above but adds it as LAS 1.4 EVLR instead. really not recommended!!!
+-set_proj_wkt                  : translate GeoTIFF keys into CRS string in OGC WKT1 format using the proj lib and add it as VLR
+-set_proj_wkt_in_evlr          : same as above but adds it as LAS 1.4 EVLR instead. really not recommended!!!
 -remove_padding                : remove user-defined bytes before and after the header
 -remove_all_vlrs               : remove all VLRs
 -remove_vlr 2                  : remove third VLR with index 2 (counting starts at 0)
@@ -224,7 +250,9 @@ other commandline arguments are
 -unset_attribute_offset 1      : unsets the offset of the *second* attribute in the extra bytes
 -move_evlrs_to_vlrs            : move all EVLRs with small enough payload to VLR section
 -save_vlrs                     : saves all VLRs to a file called vlrs.vlr so they can be loaded into another file
+-save_vlr 0 LASF_Projection 34735 sample.vlr : saves a single VLR specified by index (default = 0) or user ID and record ID to the file (default: save.vlr) so it can be loaded into another file header
 -load_vlrs                     : loads all VLRs from a file called vlrs.vlr and adds them to each processed file
+-load_vlr 0 LASF_Projection 34735 sample.vlr : loads a single VLR specified by index (default = 0) or user ID and record ID from the file (default: save.vlr) and adds it to each processed file header
 -dont_remove_empty_files       : does not remove files that have zero points remaining from disk
 -clip_to_bounding_box          : kicks out all points not inside the bounding box specified by the LAS header
 -week_to_adjusted              : converts time stamps from GPS week to Adjusted Standard GPS 
@@ -276,7 +304,11 @@ other commandline arguments are
 -tm 1804461.942257 0.0 feet 0.8203047 -2.1089395 0.99996
 -lcc 609601.22 0.0 meter 33.75 -79 34.33333 36.16666      : specifies a lambertian conic confomal projection
 -lcc 1640416.666667 0.0 surveyfeet 47.000000 -120.833333 47.50 48.733333
--ellipsoid 23                                             : use ellipsoid WGS-84 (specify '-ellipsoid -1' for a list)
+-ellipsoid 23                    : use ellipsoid WGS-84 (specify '-ellipsoid -1' for a list)
+-proj_epsg 32633 4326     	 : (Recommended) uses the PROJ lib to perform a CRS transformation. Optionally, the source CRS can be specified using EPSG code (deafult from the input file header). In addition, the target CRS must be specified using EPSG code 
+-proj_wkt filename_source_wkt filename_target_wkt : (Recommended) uses the PROJ lib to perform a CRS transformation. Optionally, the source CRS can be specified by using a file with the WKR representation of the CRS (deafult from the input file header). In addition, the target CRS must be specified using a file with the WKR representation of the CRS
+-proj_string "proj_string_source" "proj_string_target" : (For experienced users) uses the PROJ lib to perform a CRS transformation. Optionally, the source CRS can be specified using PRO string (deafult from the input file header). In addition, the target CRS must be specified using PROJ string. Furthermore a single PROJ string can also be specified, which directly describes a transformation or operation
+-proj_json filename_source_json filename_target_json : (For experienced users) uses the PROJ lib to perform a CRS transformation. Optionally, the source CRS can be specified by using a file with the PROJJSON representation of the CRS (deafult from the input file header). In addition, the target CRS must be specified using a file with the PROJJSON representation of the CRS
 
 for more info:
 

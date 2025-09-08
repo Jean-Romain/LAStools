@@ -42,12 +42,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef _WIN32
-#define DIRECTORY_SLASH '\\'
-#else
-#define DIRECTORY_SLASH '/'
-#endif
-
 void LASwriter::dealloc()
 {
   delete this;
@@ -65,7 +59,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
     LASwriterLAS* laswriterlas = new LASwriterLAS();
     if (!laswriterlas->open(header, (format == LAS_TOOLS_FORMAT_LAZ ? (native ? LASZIP_COMPRESSOR_LAYERED_CHUNKED : LASZIP_COMPRESSOR_CHUNKED) : LASZIP_COMPRESSOR_NONE), 2, chunk_size))
     {
-      LASMessage(LAS_ERROR, "cannot open laswriterlas to NULL");
+      laserror("cannot open laswriterlas to NULL");
       delete laswriterlas;
       return 0;
     }
@@ -78,7 +72,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterLAS* laswriterlas = new LASwriterLAS();
       if (!laswriterlas->open(file_name, header, (format == LAS_TOOLS_FORMAT_LAZ ? (native ? LASZIP_COMPRESSOR_LAYERED_CHUNKED : LASZIP_COMPRESSOR_CHUNKED) : LASZIP_COMPRESSOR_NONE), 2, chunk_size, io_obuffer_size))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterlas with file name '%s'", file_name);
+        laserror("cannot open laswriterlas with file name '%s'", file_name);
         delete laswriterlas;
         return 0;
       }
@@ -91,7 +85,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       else if (optx) laswritertxt->set_ptx(TRUE);
       if (!laswritertxt->open(file_name, header, parse_string, separator))
       {
-        LASMessage(LAS_ERROR, "cannot open laswritertxt with file name '%s'", file_name);
+        laserror("cannot open laswritertxt with file name '%s'", file_name);
         delete laswritertxt;
         return 0;
       }
@@ -103,7 +97,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterBIN* laswriterbin = new LASwriterBIN();
       if (!laswriterbin->open(file_name, header, "ts8"))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterbin with file name '%s'", file_name);
+        laserror("cannot open laswriterbin with file name '%s'", file_name);
         delete laswriterbin;
         return 0;
       }
@@ -114,7 +108,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterQFIT* laswriterqfit = new LASwriterQFIT();
       if (!laswriterqfit->open(file_name, header, 40))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterqfit with file name '%s'", file_name);
+        laserror("cannot open laswriterqfit with file name '%s'", file_name);
         delete laswriterqfit;
         return 0;
       }
@@ -125,7 +119,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterWRL* laswriterwrl = new LASwriterWRL();
       if (!laswriterwrl->open(file_name, header, parse_string))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterwrl with file name '%s'", file_name);
+        laserror("cannot open laswriterwrl with file name '%s'", file_name);
         delete laswriterwrl;
         return 0;
       }
@@ -133,7 +127,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown format %d", format);
+      laserror("unknown format %d", format);
       return 0;
     }
   }
@@ -144,7 +138,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterLAS* laswriterlas = new LASwriterLAS();
       if (!laswriterlas->open(stdout, header, (format == LAS_TOOLS_FORMAT_LAZ ? (native ? LASZIP_COMPRESSOR_LAYERED_CHUNKED : LASZIP_COMPRESSOR_CHUNKED) : LASZIP_COMPRESSOR_NONE), 2, chunk_size))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterlas to stdout");
+        laserror("cannot open laswriterlas to stdout");
         delete laswriterlas;
         return 0;
       }
@@ -157,7 +151,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       else if (optx) laswritertxt->set_ptx(TRUE);
       if (!laswritertxt->open(stdout, header, parse_string, separator))
       {
-        LASMessage(LAS_ERROR, "cannot open laswritertxt to stdout");
+        laserror("cannot open laswritertxt to stdout");
         delete laswritertxt;
         return 0;
       }
@@ -169,7 +163,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterBIN* laswriterbin = new LASwriterBIN();
       if (!laswriterbin->open(stdout, header, "ts8"))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterbin to stdout");
+        laserror("cannot open laswriterbin to stdout");
         delete laswriterbin;
         return 0;
       }
@@ -180,7 +174,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterQFIT* laswriterqfit = new LASwriterQFIT();
       if (!laswriterqfit->open(stdout, header, 40))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterbin to stdout");
+        laserror("cannot open laswriterbin to stdout");
         delete laswriterqfit;
         return 0;
       }
@@ -191,7 +185,7 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
       LASwriterWRL* laswriterwrl = new LASwriterWRL();
       if (!laswriterwrl->open(stdout, header, parse_string))
       {
-        LASMessage(LAS_ERROR, "cannot open laswriterwrl with file name '%s'", file_name);
+        laserror("cannot open laswriterwrl with file name '%s'", file_name);
         delete laswriterwrl;
         return 0;
       }
@@ -199,13 +193,13 @@ LASwriter* LASwriteOpener::open(const LASheader* header)
     }
     else
     {
-      LASMessage(LAS_ERROR, "unknown format %d", format);
+      laserror("unknown format %d", format);
       return 0;
     }
   }
   else
   {
-    LASMessage(LAS_ERROR, "no laswriter output specified");
+    laserror("no laswriter output specified");
     return 0;
   }
 }
@@ -250,7 +244,11 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       continue;
     }
-    else if (strcmp(argv[i],"-h") == 0)
+    else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0)
+    {
+      return TRUE;
+    }
+    else if (strcmp(argv[i], "-hh") == 0)
     {
       usage();
       return TRUE;
@@ -259,7 +257,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: file_name", argv[i]);
+        laserror("'%s' needs 1 argument: file_name", argv[i]);
         return FALSE;
       }
       set_file_name(argv[i+1]);
@@ -269,12 +267,12 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: directory", argv[i]);
+        laserror("'%s' needs 1 argument: directory", argv[i]);
         return FALSE;
       }
       if (!set_directory(argv[i+1]))
       {
-        LASMessage(LAS_ERROR, "'%s' is not a valid directory", argv[i+1]);
+        laserror("'%s' is not a valid directory", argv[i+1]);
         return FALSE;
       }
       *argv[i]='\0'; *argv[i+1]='\0'; i+=1;
@@ -283,7 +281,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: appendix", argv[i]);
+        laserror("'%s' needs 1 argument: appendix", argv[i]);
         return FALSE;
       }
       set_appendix(argv[i+1]);
@@ -293,7 +291,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: number of characters to cut", argv[i]);
+        laserror("'%s' needs 1 argument: number of characters to cut", argv[i]);
         return FALSE;
       }
       set_cut(atoi(argv[i+1]));
@@ -323,6 +321,12 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       set_format(LAS_TOOLS_FORMAT_LAZ);
       *argv[i]='\0';
+    }
+    else if (strcmp(argv[i], "-ojs") == 0)
+    {
+      specified = TRUE;
+      set_format(LAS_TOOLS_FORMAT_JSON);
+      *argv[i] = '\0';
     }
     else if (strcmp(argv[i],"-otxt") == 0)
     {
@@ -361,7 +365,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: number_points", argv[i]);
+        laserror("'%s' needs 1 argument: number_points", argv[i]);
         return FALSE;
       }
       set_chunk_size(atoi(argv[i+1]));
@@ -371,7 +375,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: string", argv[i]);
+        laserror("'%s' needs 1 argument: string", argv[i]);
         return FALSE;
       }
       set_parse_string(argv[i+1]);
@@ -381,7 +385,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: separator", argv[i]);
+        laserror("'%s' needs 1 argument: separator", argv[i]);
         return FALSE;
       }
       set_separator(argv[i+1]);
@@ -391,7 +395,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: scale", argv[i]);
+        laserror("'%s' needs 1 argument: scale", argv[i]);
         return FALSE;
       }
       set_scale_rgb((F32)atof(argv[i+1]));
@@ -411,7 +415,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
     {
       if ((i+1) >= argc)
       {
-        LASMessage(LAS_ERROR, "'%s' needs 1 argument: size", argv[i]);
+        laserror("'%s' needs 1 argument: size", argv[i]);
         return FALSE;
       }
       set_io_obuffer_size((I32)atoi(argv[i+1]));
@@ -439,13 +443,19 @@ BOOL LASwriteOpener::set_directory(const CHAR* directory)
                               "\tinstead.");
     }
     this->directory = LASCopyString(directory);
+    if (this->directory == nullptr) 
+    {
+      return FALSE;
+    }
+#pragma warning(push)
+#pragma warning(disable : 6001)
     I32 len = (I32)strlen(this->directory);
     if ((len > 0) && ((this->directory[len-1] == '\\') || (this->directory[len-1] == '/')))
     {
       this->directory[len-1] = '\0';
     }
     if (file_name) add_directory();
-
+#pragma warning(pop)
     // return FALSE if it does not exist or is no directory
 
     if ((len > 0) && (this->directory[len-1] != ':'))
@@ -492,7 +502,7 @@ void LASwriteOpener::set_file_name(const CHAR* file_name)
     while (ext && (this->file_name[ext-1] != '.'))
     {
       ext--;
-      if ((len - ext) > 3)
+      if ((len - ext) > 4)
       {
         ext = 0;
         break;
@@ -527,6 +537,10 @@ void LASwriteOpener::set_file_name(const CHAR* file_name)
         {
           format = LAS_TOOLS_FORMAT_VRML;
         }
+        else if (strstr(extension, "json") || strstr(extension, "JSON"))  // json
+        {
+          format = LAS_TOOLS_FORMAT_JSON;
+        }
         else // assume ascii output
         {
           format = LAS_TOOLS_FORMAT_TXT;
@@ -535,11 +549,14 @@ void LASwriteOpener::set_file_name(const CHAR* file_name)
     }
     else
     {
-      CHAR* temp_file_name = (CHAR*)malloc(len + (format == LAS_TOOLS_FORMAT_QFIT ? 4 : 5));
-      strcpy(temp_file_name, this->file_name);
-      free(this->file_name);
-      this->file_name = temp_file_name;
-      this->file_name[len] = '.';
+      CHAR* temp_file_name = (CHAR*)malloc(len + (format == LAS_TOOLS_FORMAT_QFIT ? 4 : (format == LAS_TOOLS_FORMAT_JSON ? 6 : 5)));
+      if (temp_file_name) 
+      {
+        strcpy(temp_file_name, this->file_name);
+        free(this->file_name);
+        this->file_name = temp_file_name;
+        this->file_name[len] = '.';
+      }
       if (format == LAS_TOOLS_FORMAT_LAZ)
       {
         len++;
@@ -582,6 +599,17 @@ void LASwriteOpener::set_file_name(const CHAR* file_name)
         this->file_name[len] = 'r';
         len++;
         this->file_name[len] = 'l';
+      }
+      else if (format == LAS_TOOLS_FORMAT_JSON)  // json
+      {
+        len++;
+        this->file_name[len] = 'j';
+        len++;
+        this->file_name[len] = 's';
+        len++;
+        this->file_name[len] = 'o';
+        len++;
+        this->file_name[len] = 'n';
       }
       else // assume ascii output
       {
@@ -633,7 +661,7 @@ void LASwriteOpener::set_native(BOOL native)
 
 BOOL LASwriteOpener::set_format(I32 format)
 {
-  if ((format < LAS_TOOLS_FORMAT_DEFAULT) || (format > LAS_TOOLS_FORMAT_TXT))
+  if ((format < LAS_TOOLS_FORMAT_DEFAULT) || ((format > LAS_TOOLS_FORMAT_TXT) && format != LAS_TOOLS_FORMAT_JSON))
   {
     return FALSE;
   }
@@ -680,6 +708,13 @@ BOOL LASwriteOpener::set_format(I32 format)
         file_name[len+2] = 'r';
         file_name[len+3] = 'l';
 	    }
+      else if (format == LAS_TOOLS_FORMAT_JSON)
+        {
+          file_name[len+1] = 'j';
+          file_name[len+2] = 's';
+          file_name[len+3] = 'o';
+          file_name[len+4] = 'n';
+        }
       else if (format == LAS_TOOLS_FORMAT_TXT)
 	    {
         file_name[len+1] = 't';
@@ -690,7 +725,13 @@ BOOL LASwriteOpener::set_format(I32 format)
       {
         return FALSE;
       }
-      file_name[len+4] = '\0';
+      if (format == LAS_TOOLS_FORMAT_JSON) {
+        file_name[len + 5] = '\0';
+      }
+      else
+      {
+        file_name[len + 4] = '\0';
+      }
     }
   }
   return TRUE;
@@ -719,6 +760,10 @@ BOOL LASwriteOpener::set_format(const CHAR* format)
     else if (strstr(format, "wrl") || strstr(format, "WRL")) // VRML
     {
       return set_format(LAS_TOOLS_FORMAT_VRML);
+    }
+    else if (strstr(format, "json") || strstr(format, "JSON"))  // json
+    {
+      return set_format(LAS_TOOLS_FORMAT_JSON);
     }
     else // assume ascii output
     {
@@ -751,35 +796,38 @@ void LASwriteOpener::make_numbered_file_name(const CHAR* file_name, I32 digits)
     if (this->file_name != 0) free(this->file_name);
     len = (I32)strlen(file_name);
     this->file_name = (CHAR*)malloc(len + digits + 2);
-    strcpy(this->file_name, file_name);
+    if (this->file_name) strcpy(this->file_name, file_name);
   }
   else
   {
     if (this->file_name == 0) this->file_name = LASCopyString("output.xxx");
     len = (I32)strlen(this->file_name);
-    this->file_name = (CHAR*)realloc(this->file_name, len + digits + 2);
+    this->file_name = (CHAR*)realloc_las(this->file_name, len + digits + 2);
   }
-  while (len > 0 && this->file_name[len] != '.')
+  if (this->file_name != nullptr) 
   {
-    len--;
-  }
-  if (len > 0)
-  {
-    this->file_name[len] = '_';
+    while (len > 0 && this->file_name[len] != '.')
+    {
+      len--;
+    }
+    if (len > 0)
+    {
+      this->file_name[len] = '_';
+      len++;
+    }
+    while (digits > 0)
+    {
+      this->file_name[len] = '0';
+      digits--;
+      len++;
+    }
+    this->file_name[len] = '.';
     len++;
+    this->file_name[len] = 'x';
+    this->file_name[len+1] = 'x';
+    this->file_name[len+2] = 'x';
+    this->file_name[len+3] = '\0';
   }
-  while (digits > 0)
-  {
-    this->file_name[len] = '0';
-    digits--;
-    len++;
-  }
-  this->file_name[len] = '.';
-  len++;
-  this->file_name[len] = 'x';
-  this->file_name[len+1] = 'x';
-  this->file_name[len+2] = 'x';
-  this->file_name[len+3] = '\0';
 }
 
 void LASwriteOpener::make_file_name(const CHAR* file_name, I32 file_number)
@@ -881,13 +929,26 @@ void LASwriteOpener::make_file_name(const CHAR* file_name, I32 file_number)
     this->file_name[len+1] = 'i';
     this->file_name[len+2] = '\0';
   }
+  else if (format == LAS_TOOLS_FORMAT_JSON)
+  {
+    this->file_name[len] = 'j';
+    this->file_name[len + 1] = 's';
+    this->file_name[len + 2] = 'o';
+    this->file_name[len + 3] = 'n';
+  }
   else // if (format == LAS_TOOLS_FORMAT_TXT)
   {
     this->file_name[len] = 't';
     this->file_name[len+1] = 'x';
     this->file_name[len+2] = 't';
   }
-  this->file_name[len+3] = '\0';
+  if (format == LAS_TOOLS_FORMAT_JSON) {
+    this->file_name[len + 4] = '\0';
+  }
+  else
+  {
+    this->file_name[len + 3] = '\0';
+  }
 
   if (directory) add_directory();
 
@@ -915,6 +976,10 @@ void LASwriteOpener::make_file_name(const CHAR* file_name, I32 file_number)
       else if (format == LAS_TOOLS_FORMAT_VRML)
       {
         this->file_name = LASCopyString("temp.wrl");
+      }
+      else if (format == LAS_TOOLS_FORMAT_JSON)
+      {
+        this->file_name = LASCopyString("temp.json");
       }
       else // if (format == LAS_TOOLS_FORMAT_TXT)
       {
@@ -956,7 +1021,7 @@ CHAR* LASwriteOpener::get_file_name_base() const
   {
     I32 len = (I32)strlen(directory);
     file_name_base = (CHAR*)malloc(len+2);
-    sprintf(file_name_base, "%s%c", directory, DIRECTORY_SLASH);
+    snprintf(file_name_base, len + 2, "%s%c", directory, DIRECTORY_SLASH);
   }
 
   return file_name_base;
@@ -1003,7 +1068,7 @@ BOOL LASwriteOpener::format_was_specified() const
   return specified;
 }
 
-static const CHAR* LAS_TOOLS_FORMAT_NAMES[11] = { "las", "las", "laz", "bin", "qi", "wrl", "txt", "shp", "asc", "bil", "flt" };
+static const CHAR* LAS_TOOLS_FORMAT_NAMES[12] = {"las", "las", "laz", "bin", "qi", "wrl", "txt", "shp", "asc", "bil", "flt", "json"};
 
 const CHAR* LASwriteOpener::get_format_name() const
 {
@@ -1018,25 +1083,26 @@ I32 LASwriteOpener::get_format() const
   }
   else
   {
-    if (strstr(file_name, ".laz") || strstr(file_name, ".LAZ"))
-    {
+    if (HasFileExt(std::string(file_name), ".laz")) {
       return LAS_TOOLS_FORMAT_LAZ;
-    }
-    else if (strstr(file_name, ".las") || strstr(file_name, ".LAS"))
+    } else if (HasFileExt(std::string(file_name), ".las"))
     {
       return LAS_TOOLS_FORMAT_LAS;
-    }
-    else if (strstr(file_name, ".bin") || strstr(file_name, ".BIN")) // terrasolid
+    } else if (HasFileExt(std::string(file_name), ".bin"))  // terrasolid
     {
       return LAS_TOOLS_FORMAT_BIN;
     }
-    else if (strstr(file_name, ".qi") || strstr(file_name, ".QI")) // QFIT
+    else if (HasFileExt(std::string(file_name), ".qi")) // QFIT
     {
       return LAS_TOOLS_FORMAT_QFIT;
     }
-    else if (strstr(file_name, ".wrl") || strstr(file_name, ".WRL")) // VRML
+    else if (HasFileExt(std::string(file_name), ".wrl")) // VRML
     {
       return LAS_TOOLS_FORMAT_VRML;
+    }
+    else if (HasFileExt(std::string(file_name), ".json"))  // json
+    {
+      return LAS_TOOLS_FORMAT_JSON;
     }
     else // assume ascii output
     {
@@ -1091,7 +1157,7 @@ void LASwriteOpener::add_directory(const CHAR* directory)
     while ((len > 0) && (file_name[len] != '\\') && (file_name[len] != '/') && (file_name[len] != ':')) len--;
     if (len > 0) len++;
     CHAR* new_file_name = (CHAR*)malloc(strlen(directory) + strlen(&(file_name[len])) + 5);
-    sprintf(new_file_name, "%s%c%s", directory, DIRECTORY_SLASH, &(file_name[len]));
+    snprintf(new_file_name, strlen(directory) + strlen(&(file_name[len])) + 5, "%s%c%s", directory, DIRECTORY_SLASH, &(file_name[len]));
     free(file_name);
     file_name = new_file_name;
   }
@@ -1109,47 +1175,55 @@ void LASwriteOpener::add_appendix(const CHAR* appendix)
 
     if ((len == 0) || (file_name[len] == '\\') || (file_name[len] == '/') || (file_name[len] == ':'))
     {
-      sprintf(new_file_name, "%s%s", file_name, appendix);
+      snprintf(new_file_name, strlen(appendix) + 5, "%s%s", file_name, appendix);
     }
-    else
+    else if (new_file_name) 
     {
-      strncpy(new_file_name, file_name, len);
-      sprintf(&(new_file_name[len]), "%s%s", appendix, &(file_name[len]));
+      strncpy_las(new_file_name, len + strlen(appendix) + 5, file_name, len);
+      snprintf(&(new_file_name[len]), len + strlen(appendix) + 5, "%s%s", appendix, &(file_name[len]));
     }
     free(file_name);
     file_name = new_file_name;
   }
 }
 
-void LASwriteOpener::cut_characters(U32 cut)
-{
-  if (cut == 0) cut = this->cut;
-
+#ifdef __GNUC__ 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+void LASwriteOpener::cut_characters() {
   if (file_name && cut)
   {
     I32 len = (I32)strlen(file_name);
-    CHAR* new_file_name = (CHAR*)malloc(len - cut + 5);
+    I32 new_len = (len > cut) ? (len - cut) : 0;
+    CHAR* new_file_name = (CHAR*)malloc(new_len + 5);
     while ((len > 0) && (file_name[len] != '.') && (file_name[len] != '\\') && (file_name[len] != '/') && (file_name[len] != ':')) len--;
 
-    if ((len == 0) || (file_name[len] == '\\') || (file_name[len] == '/') || (file_name[len] == ':'))
+    if (new_file_name)
     {
-      len = (I32)strlen(file_name);
-      memcpy(new_file_name, file_name, len-cut);
-    }
-    else
-    {
-      strncpy(new_file_name, file_name, len-cut);
-      sprintf(&(new_file_name[len-cut]), "%s", &(file_name[len]));
+      if ((len == 0) || (file_name[len] == '\\') || (file_name[len] == '/') || (file_name[len] == ':'))
+      {
+        len = (I32)strlen(file_name);
+        memcpy(new_file_name, file_name, new_len);
+      }
+      else
+      {
+        strncpy_las(new_file_name, new_len + 5, file_name, new_len);
+        snprintf(&(new_file_name[new_len]), new_len + 5, "%s", &(file_name[len]));
+      }
     }
     free(file_name);
     file_name = new_file_name;
   }
 }
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 LASwriteOpener::LASwriteOpener()
 {
   io_obuffer_size = LAS_TOOLS_IO_OBUFFER_SIZE;
-  directory = 0;
+  directory = nullptr;
   file_name = 0;
   appendix = 0;
   cut = 0;

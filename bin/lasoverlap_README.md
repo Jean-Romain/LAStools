@@ -81,7 +81,7 @@ for continous segments (or rather interruptions) in the GPS time stamps.
 
 
     lasoverlap64 -i LDR*.las -files_are_flightlines -step 3 ^
-	           -min_diff 0.1 -max_diff 0.4 -o overlap.png
+             -min_diff 0.1 -max_diff 0.4 -o overlap.png
 
 merges all the files "LDR*.las" while assigning the points of each file 
 a unique point source ID (aka flight line number), and then creates an 
@@ -94,7 +94,7 @@ mapped to white.
 
 
     lasoverlap64 -i LDR*.las -files_are_flightlines -step 3 ^
-	           -min_diff 1.0 -max_diff 2.0 -o overlap.png
+             -min_diff 1.0 -max_diff 2.0 -o overlap.png
 
 same as above. But here the difference raster uses '-min_diff 1' and 
 '-max_diff 2' to map range (-2 ... -1) to color ramp (blue ... white), 
@@ -102,7 +102,7 @@ range (-1 ... +1) to white and (+1 ... +2) to (white ... red).
 
 
     lasoverlap64 -i LDR*.las -files_are_flightlines -step 2 ^
-	           -max_diff 0.5 -no_over
+             -max_diff 0.5 -no_over
 
 same as above but does not output an overlap raster ('-no_over') and 
 operates with different '-step 2' and '-max_diff 0.5' settings.
@@ -123,14 +123,14 @@ ID populated.
 
 
     lasoverlap64 -i tiles*.laz -step 2 -no_over -utm 15N ^
-	           -intensity -highest
+             -intensity -highest
 
 same as above but computes intensity differences. For intensities the 
 difference raster maps range -255 ... 0 ... 255 (e.g. '-max_diff 255').
 
 
     lasoverlap64 -i tiles*.laz -keep_last -step 2 -no_over ^
-	           -utm 15N -counter -highest
+             -utm 15N -counter -highest
 
 same as above but computes last return count differences. For counts the 
 difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
@@ -142,7 +142,6 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -avg                              : compute per cell averages before checking difference  
 -bands [w] [b] [g]                : map absolute differences up to [w] to white,  [b] to blue, [g] to green, and above to red  
 -color_bands [m] [n]              : see tool description  
--cores [n]                        : process multiple inputs on [n] cores in parallel  
 -counter                          : check difference in point counts per overlapping flightline per cell with an 8 bit counter  
 -counter_16bit                    : check difference in point counts per overlapping flightline per cell with a 16 bit counter  
 -counter_32bit                    : check difference in point counts per overlapping flightline per cell with a 32 bit counter  
@@ -156,6 +155,7 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -fill [n]                         : fills voids in the grid with a square search radius of [n]  
 -gray                             : map values to gray values instead of colors  
 -grey                             : map values to gray values instead of colors  
+-grid_center                      : aligns the grid's origin to the center of a cell instead of its corner
 -high                             : use highest value per cell to checking difference  
 -highest                          : use highest value per cell to checking difference  
 -ilay [n]                         : apply [n] or all LASlayers found in corresponding *.lay file on read  
@@ -190,15 +190,22 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -week_to_adjusted [n]             : converts time stamps from GPS week [n] to Adjusted Standard GPS  
 
 ### Basics
--cpu64   : start 64 bit executable (instead of default 32 bit executable)  
--fail    : fail if license expired or invalid  
--gui     : start with files loaded into GUI  
--h       : print help output  
--help    : print help output  
--license : show license information  
--v       : verbose output (print extra information)  
--verbose : verbose output (print extra information)  
--version : reports this tool's version number  
+-cores [n]      : process multiple inputs on [n] cores in parallel  
+-license        : show license information  
+-demo           : use LAStools in demo mode (64bit only)  
+-fail           : fail if license expired or invalid (default for 64bit)
+-h, -help       : print help output  
+-v, -verbose    : verbose output (print extra information)  
+-vv             : very verbose output (print even more information)  
+-silent         : only output on errors or warnings
+-quiet          : no output at all
+-force          : continue, even if serious warnings occur  
+-errors_ignore  : continue, even if errors occur (if possible). Use with caution!
+-print_log_stats: print additional log statistics  
+-cpu64          : force 32bit version to start 64 bit in multi core (obsolete)
+-gui            : start with files loaded into GUI  
+-version        : reports this tool's version number  
+
 
 ## Module arguments
 
@@ -208,6 +215,7 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -neighbors [n]     : set neighbors filename or wildcard [n]  
 -neighbors_lof [n] : set neighbors list of files [fnf]  
 -no_data [n]       : use [n] as the nodata value in the BIL / ASC format  
+-no_data_alpha     : adds an alpha channel to the GeoTIFF output, designating areas with no data as transparent  
 -no_kml            : avoids auto-creation of KML wrapper  
 -no_world_file     : avoid world-file for PNG, JPG, TIF and BIL output  
 -stored            : use in memory reader  
@@ -239,8 +247,10 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -drop_RGB_green [min] [max]         : drop points with green color value between [min] and [max]  
 -drop_RGB_red [min] [max]           : drop points with red color value between [min] and [max]  
 -force_RGB                          : force the use of the RGB value even if the point format does not support RGB  
+-keep_NDVI [min] [max]              : keep NDVI (Normalized Difference Vegetation Index) between [min] [max]  
 -keep_NDVI_from_CIR [min] [max]     : keep NDVI (Normalized Difference Vegetation Index) from CIR between [min] [max]  
 -keep_NDVI_green_is_NIR [min] [max] : keep NDVI (Normalized Difference Vegetation Index) where green is NIR between [min] [max]  
+-keep_NDVI_blue_is_NIR [min] [max]  : keep NDVI (Normalized Difference Vegetation Index) where blue is NIR between [min] [max]  
 -keep_NDVI_intensity_is_NIR [min] [max]: keep NDVI (Normalized Difference Vegetation Index) where intensity is NIR between [min] [max]  
 -keep_RGB_blue [m] [n]              : keep points with RGB blue color values between [min] [max]  
 -keep_RGB_green [min] [max]         : keep points with green color value between [min] and [max]  
@@ -328,7 +338,7 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -switch_x_y                         : exchange x and y value  
 -switch_x_z                         : exchange x and z value  
 -switch_y_z                         : exchange z and x value  
--transform_affine [a],[b],[c],[d]   : transform input using affine transformation with [a],[b],[c],[d]  
+-transform_affine [k,w,x,y]         : transform by k*cos(w)+k*sin(w)+tx;k*cos(w)+k*sin(w)+ty - angle in second of arc  
 -transform_helmert [m] [n] [o]      : do a helmert transformation with 3 or 7 comma separated parameters [n] ...  
 -transform_matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]: transform input using matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]  
 -translate_raw_x [n]                : translate raw x value by [n]  
@@ -336,6 +346,9 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -translate_raw_xyz [x] [y] [z]      : translate raw coordinates by [x] [y] [z]  
 -translate_raw_y [n]                : translate raw y value by [n]  
 -translate_raw_z [n]                : translate raw z value by [n]  
+-translate_scale_translate_x [m] [n]: calculate x value as (x–[m])*[n]+[m]  
+-translate_scale_translate_y [m] [n]: calculate y value as (y–[m])*[n]+[m]  
+-translate_scale_translate_z [m] [n]: calculate z value as (z–[m])*[n]+[m]  
 -translate_then_scale_x [m] [n]     : translate x value by [m] and scale by [n]  
 -translate_then_scale_y [m] [n]     : translate y value by [m] and scale by [n]  
 -translate_then_scale_z [m] [n]     : translate z value by [m] and scale by [n]  
@@ -399,6 +412,7 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -faf                           : input files are flightlines. do ***NOT*** use this for tiled input  
 -faf_index [n]                 : set files are flightlines index [n]  
 -files_are_flightlines         : input files are flightlines. do ***NOT*** use this for tiled input  
+-drop_edge_of_flight_line      : drop points with "Edge of Flight Line" flag set  
 -keep_edge_of_flight_line      : keep points with "Edge of Flight Line" flag set  
 -keep_scan_direction_change    : keep points with changed scan direction flag  
 -set_edge_of_flight_line [0/1] : set "Edge of Flight Line" flag to [0/1]  
@@ -782,17 +796,17 @@ difference raster maps range -100 ... 0 ... 100 (e.g. '-max_diff 100').
 -osep [n]                : set text output separator as [sep] (see below, only xyz)  
 -otif                    : output as GeoTIFF image  
 -oxyz                    : output as xyz textfile  
+-force_tif               : force output in TIFF format, regardless of data size. Used in combination with GeoTIFF output  
+-force_bigTif            : force output in BigTIFF format, regardless of data size. Used in combination with GeoTIFF output  
 -pipe_on                 : write output to command pipe, see also -std_in  
 -populate                : populate header on output  
 -target_ecef             : output is geocentric (Earth-centered Earth-fixed)
 
 ### parse
-The '-parse [xyz]' flag specifies how to interpret
-each line of the ASCII file. For example, 'tsxyzssa'
-means that the first number is the gpstime, the next
-number should be skipped, the next three numbers are
-the x, y, and z coordinate, the next two should be
-skipped, and the next number is the scan angle.
+The '-parse [xyz]' flag specifies how to interpret each line of the ASCII file.
+For example, 'tsxyzssa' means that the first number is the gpstime, the next
+number should be skipped, the next three numbers are the x, y, and z coordinate,
+the next two should be skipped, and the next number is the scan angle.
 
 The other supported entries are:  
   x : [x] coordinate  
@@ -814,7 +828,7 @@ The other supported entries are:
   o : [o]verlap flag of LAS 1.4 point types 6, 7, 8  
   l : scanner channe[l] of LAS 1.4 point types 6, 7, 8  
   E : terrasolid [E]hco Encoding  
-  c : [c]lassification  
+  c : [c]lassification. If extended classes are used: Use o,l or I to force 1.4 format.  
   u : [u]ser data  
   p : [p]oint source ID  
   e : [e]dge of flight line flag  
@@ -836,26 +850,26 @@ Supported [sep] values:
   hyphen
   space
 
-## License
+## Licensing
 
-Please license from info@rapidlasso.de to use the tool
-commercially. 
-You may use the tool to do tests with up to 3 mio points.
-Please note that the unlicensed version may will adjust
-some data and add a bit of white noise to the coordinates.
+Info on licensing and pricing: https://rapidlasso.de/pricing/.
+If you have any questions or need assistance, email to info@rapidlasso.de.
+
+## Evaluation and demo mode
+
+Please use the "-demo" argument to run the tool in demo mode. For quality tests,
+use small files (< 1.5 million points). If you use larger files, the output will
+contain diagonal lines/output distortions due to the license protection.
 
 ## Support
 
-To get more information about a tool just goto the
-[LAStools Google Group](http://groups.google.com/group/lastools/)
-and enter the tool name in the search function.
-You will get plenty of samples to this tool.
+1. We invite you to join our LAStools Google Group (http://groups.google.com/group/lastools/).
+   If you are looking for information about a specific tool, enter the tool name in the search 
+   function and you'll find all discussions related to the respective tool. 
+2. Customer Support Page: https://rapidlasso.de/customer-support/.  
+3. Download LAStools: https://rapidlasso.de/downloads/.  
+4. Changelog: https://rapidlasso.de/changelog/.  
 
-To get further support see our
-[rapidlasso service page](https://rapidlasso.de/service/)
 
-Check for latest updates at
-https://rapidlasso.de/category/blog/releases/
-
-If you have any suggestions please let us (info@rapidlasso.de) know.
-
+If you want to send us feedback or have questions that are not answered in the resources above, 
+please email to info@rapidlasso.de.

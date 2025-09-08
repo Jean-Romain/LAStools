@@ -8,8 +8,9 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>src;inc;..\LASzip\inc;..\LASzip\src;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;inc;..\LASzip\inc;..\LASzip\src;..\LASzip\include\laszip;</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -24,9 +25,9 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\LASzip\src\lascopc.cpp" />
     <ClCompile Include="..\LASzip\src\lasmessage.cpp" />
     <ClCompile Include="src\fopen_compressed.cpp" />
+    <ClCompile Include="src\lascopc.cpp" />
     <ClCompile Include="src\lasfilter.cpp" />
     <ClCompile Include="src\lasignore.cpp" />
     <ClCompile Include="src\laskdtree.cpp" />
@@ -57,8 +58,6 @@
     <ClCompile Include="src\laswriter_wrl.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\LASzip\src\lascopc.hpp" />
-    <ClInclude Include="..\LASzip\src\lasmessage.hpp" />
     <ClInclude Include="inc\lasdefinitions.hpp" />
     <ClInclude Include="inc\lasfilter.hpp" />
     <ClInclude Include="inc\lasignore.hpp" />
@@ -90,6 +89,7 @@
     <ClInclude Include="inc\laswriter_qfit.hpp" />
     <ClInclude Include="inc\laswriter_txt.hpp" />
     <ClInclude Include="inc\laswriter_wrl.hpp" />
+    <ClInclude Include="inc\lascopc.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -29,6 +29,14 @@ lasoptimize that either '-scanner_channel_in_point_source_ID' or
 that '-scanner_channel_in_user_data' as compression will suffer
 biggly when beam switches are ignored.
 
+## Offset
+The following options are available for automatically setting a sensible offset of the point coordinates to avoid overflows:
+
+-auto_reoffset: This option sets an appropriate offset in the header and translates the points accordingly. 
+This option is only considered for LAS/LAZ input files and is recommended as long as no point coordinate operation or transformation is performed.
+
+-offset_adjust: This option sets the offset based on the selected point coordinate operations and transformations. 
+It is recommended to be used for such operations and transformations and is applicable to all supported input file formats.
 
 ## Examples
 
@@ -55,7 +63,6 @@ of each point.
 
 -append                             : append LAX index to existing file  
 -average [n]                        : requested average point per cells value of [n] (default=20000)  
--cores [n]                          : process multiple inputs on [n] cores in parallel  
 -do_not_create_lax                  : do not create index file  
 -do_not_eliminate_fluff             : do not eliminate point coordinate value fluff  
 -do_not_move_EVLRs                  : do not move EVLRs  
@@ -71,17 +78,22 @@ of each point.
 -week_to_adjusted [n]               : converts time stamps from GPS week [n] to Adjusted Standard GPS  
 
 ### Basics
--cpu64   : start 64 bit executable (instead of default 32 bit executable)  
--fail    : fail if license expired or invalid  
--gui     : start with files loaded into GUI  
--h       : print help output  
--help    : print help output  
--license : show license information  
--quiet   : nothing reported in console  
--v       : verbose output (print extra information)  
--verbose : verbose output (print extra information)  
--version : reports this tool's version number  
--vv      : very verbose output (print even more information)  
+-cores [n]      : process multiple inputs on [n] cores in parallel  
+-license        : show license information  
+-demo           : use LAStools in demo mode (64bit only)  
+-fail           : fail if license expired or invalid (default for 64bit)
+-h, -help       : print help output  
+-v, -verbose    : verbose output (print extra information)  
+-vv             : very verbose output (print even more information)  
+-silent         : only output on errors or warnings
+-quiet          : no output at all
+-force          : continue, even if serious warnings occur  
+-errors_ignore  : continue, even if errors occur (if possible). Use with caution!
+-print_log_stats: print additional log statistics  
+-cpu64          : force 32bit version to start 64 bit in multi core (obsolete)
+-gui            : start with files loaded into GUI  
+-version        : reports this tool's version number  
+
 
 ## Module arguments
 
@@ -120,8 +132,10 @@ of each point.
 -drop_RGB_green [min] [max]         : drop points with green color value between [min] and [max]  
 -drop_RGB_red [min] [max]           : drop points with red color value between [min] and [max]  
 -force_RGB                          : force the use of the RGB value even if the point format does not support RGB  
+-keep_NDVI [min] [max]              : keep NDVI (Normalized Difference Vegetation Index) between [min] [max]  
 -keep_NDVI_from_CIR [min] [max]     : keep NDVI (Normalized Difference Vegetation Index) from CIR between [min] [max]  
 -keep_NDVI_green_is_NIR [min] [max] : keep NDVI (Normalized Difference Vegetation Index) where green is NIR between [min] [max]  
+-keep_NDVI_blue_is_NIR [min] [max]  : keep NDVI (Normalized Difference Vegetation Index) where blue is NIR between [min] [max]  
 -keep_NDVI_intensity_is_NIR [min] [max]: keep NDVI (Normalized Difference Vegetation Index) where intensity is NIR between [min] [max]  
 -keep_RGB_blue [m] [n]              : keep points with RGB blue color values between [min] [max]  
 -keep_RGB_green [min] [max]         : keep points with green color value between [min] and [max]  
@@ -153,7 +167,7 @@ of each point.
 ### Coordinates
 -add_attribute_to_z [n]             : add value of attribute [n] to z value  
 -add_scaled_attribute_to_z [m] [n]  : scale attribute [m] value by [n] and add to z value  
--auto_reoffset                      : puts a reasonable offset in the header and translates the points accordingly  
+-auto_reoffset                      : puts a reasonable offset in the header and translates the points accordingly. Only applicable to LAS/LAZ input files  
 -bin_Z_into_point_source [n]        : set point source to z/[n]  
 -clamp_raw_z [min] [max]            : limit raw z values to [min] and [max]  
 -clamp_z [min] [max]                : limit z values to [min] and [max]  
@@ -196,6 +210,7 @@ of each point.
 -keep_z [m] [n]                     : keep points with z value between [m] and [n]  
 -keep_z_above [n]                   : keep points with z value above [n]  
 -keep_z_below [n]                   : keep points with z value below [n]  
+-offset_adjust                      : adjusting the offset based on the results of point operations and transformations
 -reoffset [x] [y] [z]               : puts a new offset [x] [y] [z] into the header and translates the points accordingly  
 -rescale [x] [y] [z]                : puts a new scale [x] [y] [z] into the header and rescales the points accordingly  
 -rescale_xy [x] [y]                 : rescale x y by [x] [y]  
@@ -210,7 +225,7 @@ of each point.
 -switch_x_y                         : exchange x and y value  
 -switch_x_z                         : exchange x and z value  
 -switch_y_z                         : exchange z and x value  
--transform_affine [a],[b],[c],[d]   : transform input using affine transformation with [a],[b],[c],[d]  
+-transform_affine [k,w,x,y]         : transform by k*cos(w)+k*sin(w)+tx;k*cos(w)+k*sin(w)+ty - angle in second of arc  
 -transform_helmert [m] [n] [o]      : do a helmert transformation with 3 or 7 comma separated parameters [n] ...  
 -transform_matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]: transform input using matrix [r11,r12,r13] [r21,r22,r23] [r31,r32,r33] [tr1,tr2,tr3]  
 -translate_raw_x [n]                : translate raw x value by [n]  
@@ -218,6 +233,9 @@ of each point.
 -translate_raw_xyz [x] [y] [z]      : translate raw coordinates by [x] [y] [z]  
 -translate_raw_y [n]                : translate raw y value by [n]  
 -translate_raw_z [n]                : translate raw z value by [n]  
+-translate_scale_translate_x [m] [n]: calculate x value as (x–[m])*[n]+[m]  
+-translate_scale_translate_y [m] [n]: calculate y value as (y–[m])*[n]+[m]  
+-translate_scale_translate_z [m] [n]: calculate z value as (z–[m])*[n]+[m]  
 -translate_then_scale_x [m] [n]     : translate x value by [m] and scale by [n]  
 -translate_then_scale_y [m] [n]     : translate y value by [m] and scale by [n]  
 -translate_then_scale_z [m] [n]     : translate z value by [m] and scale by [n]  
@@ -281,6 +299,7 @@ of each point.
 -faf                           : input files are flightlines. do ***NOT*** use this for tiled input  
 -faf_index [n]                 : set files are flightlines index [n]  
 -files_are_flightlines         : input files are flightlines. do ***NOT*** use this for tiled input  
+-drop_edge_of_flight_line      : drop points with "Edge of Flight Line" flag set  
 -keep_edge_of_flight_line      : keep points with "Edge of Flight Line" flag set  
 -keep_scan_direction_change    : keep points with changed scan direction flag  
 -set_edge_of_flight_line [0/1] : set "Edge of Flight Line" flag to [0/1]  
@@ -672,12 +691,10 @@ of each point.
 -temp_files [n]  : set base file name [n] for temp files (example: E:\tmp)
 
 ### parse
-The '-parse [xyz]' flag specifies how to interpret
-each line of the ASCII file. For example, 'tsxyzssa'
-means that the first number is the gpstime, the next
-number should be skipped, the next three numbers are
-the x, y, and z coordinate, the next two should be
-skipped, and the next number is the scan angle.
+The '-parse [xyz]' flag specifies how to interpret each line of the ASCII file.
+For example, 'tsxyzssa' means that the first number is the gpstime, the next
+number should be skipped, the next three numbers are the x, y, and z coordinate,
+the next two should be skipped, and the next number is the scan angle.
 
 The other supported entries are:  
   x : [x] coordinate  
@@ -699,7 +716,7 @@ The other supported entries are:
   o : [o]verlap flag of LAS 1.4 point types 6, 7, 8  
   l : scanner channe[l] of LAS 1.4 point types 6, 7, 8  
   E : terrasolid [E]hco Encoding  
-  c : [c]lassification  
+  c : [c]lassification. If extended classes are used: Use o,l or I to force 1.4 format.  
   u : [u]ser data  
   p : [p]oint source ID  
   e : [e]dge of flight line flag  
@@ -721,22 +738,19 @@ Supported [sep] values:
   hyphen
   space
 
-## License
+## Licensing
 
 This tool is free to use.
 
 ## Support
 
-To get more information about a tool just goto the
-[LAStools Google Group](http://groups.google.com/group/lastools/)
-and enter the tool name in the search function.
-You will get plenty of samples to this tool.
+1. We invite you to join our LAStools Google Group (http://groups.google.com/group/lastools/).
+   If you are looking for information about a specific tool, enter the tool name in the search 
+   function and you'll find all discussions related to the respective tool. 
+2. Customer Support Page: https://rapidlasso.de/customer-support/.  
+3. Download LAStools: https://rapidlasso.de/downloads/.  
+4. Changelog: https://rapidlasso.de/changelog/.  
 
-To get further support see our
-[rapidlasso service page](https://rapidlasso.de/service/)
 
-Check for latest updates at
-https://rapidlasso.de/category/blog/releases/
-
-If you have any suggestions please let us (info@rapidlasso.de) know.
-
+If you want to send us feedback or have questions that are not answered in the resources above, 
+please email to info@rapidlasso.de.

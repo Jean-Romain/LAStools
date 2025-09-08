@@ -1,8 +1,7 @@
 ﻿# e572las
 
-This tool reads LiDAR in the E57 format from a *.e57 file and
-converts it to either standard LAS, compressed LAZ, or simple
-ASCII TXT.
+Reads LiDAR in the E57 format from a *.e57 file and converts it
+to either standard LAS, compressed LAZ, or simple ASCII TXT.
 
 By default all scans contained in the E57 file are merged into
 one output with all invalid points being omitted. The points of
@@ -30,6 +29,12 @@ that it find stored in the pose of each scan. You can ask the tool
 not to apply those with '-no_pose'. To selevtively suppress only
 transformation or rotation use '-no_transformation' or '-no_rotation'
 
+This tool does not support multiple file input.
+Batch conversion can be done using a batch file like
+```bat
+:: convert all *.e57 files to *.laz
+for %%f in (*.e57) do if not exist %%~nf.laz e572las -i %%f -olaz
+```
   
 ## Examples
 
@@ -212,25 +217,42 @@ written a total 1213990 points
 ## e572las specific arguments
 
 -include_invalid       : include invalid points into target  
--set_scale [x] [y] [z] : quantize ASCII points with [x] [y] [z] (unit meters)  
+-set_scale [x] [y] [z] : quantize ASCII points with [x] [y] [z] (default 0.001 meters)  
 -split_scans           : split output files by scan  
+-split                 : split output files by scan
+-no_pose               : perform neither translation nor rotation 
+-no_translation        : skip translation
+-no_rotation           : skip rotation
+-i                     : input e57 file
+-print_scan_count      : just print the number of scans and exit
+-scan 1 4 6 ...        : just process the given scans [1..n] 
 
+Any other argument is used as filename if "-i" is not set and the argument does not start with '-':
+    e572las64 foo.e57
+    
+### Basics
+-h            : print help output  
+-help         : print help output  
+-v            : verbose output (print extra information)  
+-verbose      : verbose output (print extra information)
+-very_verbose : very verbose output (print even more information)  
+-vv           : very verbose output (print even more information)  
+-version      : displays the version number of the tool  
+-license      : print license information
 
-## License
+## Licensing
 
 This tool is free to use.
 
 ## Support
 
-To get more information about a tool just goto the
-[LAStools Google Group](http://groups.google.com/group/lastools/)
-and enter the tool name in the search function.
-You will get plenty of samples to this tool.
+1. We invite you to join our LAStools Google Group (http://groups.google.com/group/lastools/).
+   If you are looking for information about a specific tool, enter the tool name in the search 
+   function and you'll find all discussions related to the respective tool. 
+2. Customer Support Page: https://rapidlasso.de/customer-support/.  
+3. Download LAStools: https://rapidlasso.de/downloads/.  
+4. Changelog: https://rapidlasso.de/changelog/.  
 
-To get further support see our
-[rapidlasso service page](https://rapidlasso.de/service/)
 
-Check for latest updates at
-https://rapidlasso.de/category/blog/releases/
-
-If you have any suggestions please let us (info@rapidlasso.de) know.
+If you want to send us feedback or have questions that are not answered in the resources above, 
+please email to info@rapidlasso.de.

@@ -2,17 +2,17 @@
 ===============================================================================
 
   FILE:  lasreaderpipeon.cpp
-  
+
   CONTENTS:
-  
+
     see corresponding header file
-  
+
   PROGRAMMERS:
-  
+
     info@rapidlasso.de  -  https://rapidlasso.de
-  
+
   COPYRIGHT:
-  
+
     (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
@@ -21,11 +21,11 @@
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
+
   CHANGE HISTORY:
-  
+
     see corresponding header file
-  
+
 ===============================================================================
 */
 #include "lasreaderpipeon.hpp"
@@ -45,7 +45,7 @@ BOOL LASreaderPipeOn::open(LASreader* lasreader)
 {
   if (lasreader == 0)
   {
-    LASMessage(LAS_ERROR, "no lasreader");
+    laserror("no lasreader");
     return FALSE;
   }
 
@@ -91,21 +91,22 @@ BOOL LASreaderPipeOn::open(LASreader* lasreader)
 
   if (laswriterlas == 0)
   {
-    LASMessage(LAS_ERROR, "allocating laswriterlas");
+    laserror("allocating laswriterlas");
     return FALSE;
   }
 
   if (!laswriterlas->open(stdout, &header))
   {
     delete laswriterlas;
-    LASMessage(LAS_ERROR, "opening laswriterlas to stdout");
+    laserror("opening laswriterlas to stdout");
     return FALSE;
   }
 
   laswriter = laswriterlas;
 
   npoints = (header.number_of_point_records ? header.number_of_point_records : header.extended_number_of_point_records);
-  p_count = 0;
+  p_idx = 0;
+  p_cnt = 0;
 
   return TRUE;
 }
@@ -176,7 +177,8 @@ BOOL LASreaderPipeOn::read_point_default()
       {
         laswriter->write_point(&point);
       }
-      p_count++;
+      p_idx++;
+      p_cnt++;
       return TRUE;
     }
     if (laswriter)
@@ -192,13 +194,13 @@ BOOL LASreaderPipeOn::read_point_default()
 
 void LASreaderPipeOn::close(BOOL close_stream)
 {
-  if (lasreader) 
+  if (lasreader)
   {
     lasreader->close(close_stream);
   }
 }
 
-LASreaderPipeOn::LASreaderPipeOn()
+LASreaderPipeOn::LASreaderPipeOn(LASreadOpener* opener) :LASreader(opener)
 {
   lasreader = 0;
   laswriter = 0;

@@ -40,15 +40,15 @@ BOOL LASwriterWRL::open(const CHAR* file_name, const LASheader* header, const CH
 {
   if (file_name == 0)
   {
-    LASMessage(LAS_ERROR, "file name pointer is zero");
+    laserror("file name pointer is zero");
     return FALSE;
   }
 
-  file = fopen(file_name, "w");
+  file = LASfopen(file_name, "w");
 
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "cannot open file '%s'", file_name);
+    laserror("cannot open file '%s'", file_name);
     return FALSE;
   }
 
@@ -61,7 +61,7 @@ BOOL LASwriterWRL::open(FILE* file, const LASheader* header, const CHAR* parse_s
 {
   if (file == 0)
   {
-    LASMessage(LAS_ERROR, "file pointer is zero");
+    laserror("file pointer is zero");
     return FALSE;
   }
 
@@ -171,7 +171,7 @@ BOOL LASwriterWRL::write_point(const LASpoint* point)
     if (p_count == rgb_alloc)
     {
       rgb_alloc *= 2;
-      rgb = (U8*)realloc(rgb, 3*sizeof(U8)*rgb_alloc);
+      rgb = (U8*)realloc_las(rgb, 3*sizeof(U8)*rgb_alloc);
     }
     if (point->rgb[0] > 255)
       rgb[3*p_count+0] = U8_CLAMP(point->rgb[0]/256);
@@ -241,6 +241,7 @@ LASwriterWRL::LASwriterWRL()
   file = 0;
   rgb = 0;
   rgb_alloc = 0;
+  header = nullptr;
 }
 
 LASwriterWRL::~LASwriterWRL()
