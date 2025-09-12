@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(LASZIP CXX C)
+
+# Always build LASzip static, even if the rest is shared
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static build of LASzip" FORCE)
+
 set(CMAKE_CXX_STANDARD 14)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 
