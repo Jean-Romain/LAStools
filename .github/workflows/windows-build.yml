@@ -1,0 +1,27 @@
+name: Windows C++ Build DLL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup CMake
+      uses: lukka/get-cmake@v3
+      with:
+        cmake-version: '3.30.4'
+
+    - name: Configure CMake
+      run: cmake -B build -S . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build DLL
+      run: cmake --build build --config Release
+
