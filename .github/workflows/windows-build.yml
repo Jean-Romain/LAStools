@@ -11,10 +11,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-# 2️⃣ Install MSYS2 (includes MinGW)
+      # 2️⃣ Install MSYS2 (includes MinGW)
       - name: Install MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -26,13 +27,7 @@ jobs:
             mingw-w64-i686-cmake
             make
 
-      # 3️⃣ Add MinGW to PATH
-      - name: Add MinGW to PATH
-        shell: bash
-        run: |
-          echo "##[set-output name=PATH]$MINGW_PREFIX/bin:$PATH"
-
-      # 4️⃣ Create build directory
+      # 3️⃣ Create build directory and configure CMake
       - name: Configure CMake
         shell: bash
         run: |
@@ -40,19 +35,18 @@ jobs:
           cd build
           cmake -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=ON ..
 
-      # 5️⃣ Build
+      # 4️⃣ Build LASlib
       - name: Build LASlib
         shell: bash
         run: |
           cd build
           mingw32-make -j$(nproc)
 
-      # 6️⃣ Upload artifacts (DLL + import library)
+      # 5️⃣ Upload artifacts (DLL + import library)
       - name: Upload LASlib artifacts
         uses: actions/upload-artifact@v3
         with:
           name: LASlib-Windows
           path: |
-            LASlib/lib/*.dll
-            LASLib/lib/*.a
-
+            build/*.dll
+            build/*.a
