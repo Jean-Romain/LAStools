@@ -47,6 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LASlib-Windows
-          path: |
-            build/*.dll
-            build/*.a
+          path: ./
