@@ -70,6 +70,7 @@ file(GLOB_RECURSE LAS_INCLUDES
 )
 
 add_library(LASlib ${LAS_SRC} ${LAZ_SRC_FULL})
+target_link_libraries(LASlib PRIVATE laszip_api)
 set_property(TARGET LASlib PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET LASlib PROPERTY CXX_STANDARD 17)
 
