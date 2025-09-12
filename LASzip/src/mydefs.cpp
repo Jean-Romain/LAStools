@@ -43,6 +43,7 @@
 #include <string>
 #ifdef _WIN32
 #include <windows.h>
+#include <direct.h>
 #else
 #include <math.h>
 #include <algorithm>
