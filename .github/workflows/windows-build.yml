@@ -14,18 +14,45 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Setup CMake
-      uses: lukka/get-cmake@latest
+# 2️⃣ Install MSYS2 (includes MinGW)
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >
+            mingw-w64-x86_64-gcc
+            mingw-w64-i686-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-i686-cmake
+            make
 
-    - name: Configure CMake
-      run: cmake -B build -S . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+      # 3️⃣ Add MinGW to PATH
+      - name: Add MinGW to PATH
+        shell: bash
+        run: |
+          echo "##[set-output name=PATH]$MINGW_PREFIX/bin:$PATH"
 
-    - name: Build DLL
-      run: cmake --build build --config Release
+      # 4️⃣ Create build directory
+      - name: Configure CMake
+        shell: bash
+        run: |
+          mkdir -p build
+          cd build
+          cmake -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=ON ..
 
-    - name: Upload entire repo
-      uses: actions/upload-artifact@v4
-      with:
-        name: LAStools
-        path: ./
+      # 5️⃣ Build
+      - name: Build LASlib
+        shell: bash
+        run: |
+          cd build
+          mingw32-make -j$(nproc)
+
+      # 6️⃣ Upload artifacts (DLL + import library)
+      - name: Upload LASlib artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: LASlib-Windows
+          path: |
+            LASlib/lib/*.dll
+            LASLib/lib/*.a
 
