@@ -44,7 +44,7 @@ jobs:
 
       # 5️⃣ Upload artifacts (DLL + import library)
       - name: Upload LASlib artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: LASlib-Windows
           path: |
