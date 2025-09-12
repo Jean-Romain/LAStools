@@ -41,7 +41,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string>
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <math.h>
