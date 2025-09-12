@@ -44,6 +44,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
+#define getcwd _getcwd
 #else
 #include <math.h>
 #include <algorithm>
